@@ -1,4 +1,4 @@
-# Hello World - Three.js Cube
+# Heatmap 3D - Three.js Cube
 
 This project involves designing and developing a web application for the interactive three-dimensional visualization of a cubic keyboard. It integrates experimental data from research on finger usage and preferences during typing.
 

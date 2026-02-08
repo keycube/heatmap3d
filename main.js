@@ -75,7 +75,7 @@ faces.forEach(face => {
         key.position.set(u, offset * face.sign, v);
       } else if (face.axis === 'x') {
         key.position.set(offset * face.sign, u, v);
-      } else { // axis 'z'
+      } else {
         key.position.set(u, v, offset * face.sign);
       }
 

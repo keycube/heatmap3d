@@ -89,22 +89,24 @@ This section covers the creation of the visible objects in the scene.
     const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize); // For the keys
     ```
 
--   `THREE.MeshStandardMaterial`: A realistic material that reacts to light. It's used for the cube and keys, allowing them to be properly lit by the `DirectionalLight`.
+-   `THREE.MeshStandardMaterial`: A realistic material that reacts to light. It's used for the cube and keys, allowing them to be properly lit by the `DirectionalLight`. The `.clone()` method is used on the key material to ensure each key can have its color changed independently.
     ```javascript
     const material = new THREE.MeshStandardMaterial({ color: 'royalblue' });
+    const keyMaterial = new THREE.MeshStandardMaterial({ color: 'orange' });
     ```
 
--   `THREE.Mesh`: The final object that combines a `Geometry` (the shape) with a `Material` (the appearance). The project creates one mesh for the central cube and many meshes for the keys.
+-   `THREE.Mesh`: The final object that combines a `Geometry` (the shape) with a `Material` (the appearance). The project creates one mesh for the central cube and many meshes for the keys inside a loop.
     ```javascript
     const cube = new THREE.Mesh(geometry, material);
+    const key = new THREE.Mesh(keyGeometry, keyMaterial.clone());
     ```
 
 -   `THREE.Group`: A container used to group multiple objects together. In this project, the main cube and all the small keys are added to `keycubeGroup`. This allows us to treat the entire assembly as a single unit for positioning and for raycasting.
     ```javascript
     const keycubeGroup = new THREE.Group();
-    keycubeGroup.add(cube);
-    keycubeGroup.add(key);
-    scene.add(keycubeGroup);
+    keycubeGroup.add(cube); // Add the main cube
+    // ...loop to add all keys...
+    scene.add(keycubeGroup); // Add the entire group to the scene
     ```
 
 ### 5. Interaction & Raycasting
@@ -123,7 +125,23 @@ This is how the application detects when the mouse is over an object.
 
 -   `raycaster.setFromCamera(mouse, camera)`: This function updates the raycaster, positioning the ray based on the current mouse coordinates and camera position.
 
--   `raycaster.intersectObjects(...)`: This function performs the actual intersection test and returns an array of all objects that the ray hits, sorted by distance. This is used to determine which key is being hovered over.
+-   `raycaster.intersectObjects(...)`: This function performs the actual intersection test and returns an array of all objects that the ray hits, sorted by distance. This is used to determine which key is being hovered over. The logic is optimized to handle changing the hovered key's color and resetting the previously hovered one in a clean and efficient way.
+    ```javascript
+    // In the animate loop:
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(keycubeGroup.children);
+    const newHoveredKey = (intersects.length > 0 && intersects[0].object !== cube) ? intersects[0].object : null;
+
+    if (hoveredKey !== newHoveredKey) {
+      if (hoveredKey) {
+        hoveredKey.material.color.set('orange'); // Reset old key
+      }
+      if (newHoveredKey) {
+        newHoveredKey.material.color.set('lightgray'); // Highlight new key
+      }
+      hoveredKey = newHoveredKey;
+    }
+    ```
 
 ### 6. Animation Loop
 

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: "fr" }}">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{ page.title | default: "Keycube Jekyll" }}</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body>
+  {{ content }}
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="{{ '/assets/js/main.js' | relative_url }}"></script>
+</body>
+</html>

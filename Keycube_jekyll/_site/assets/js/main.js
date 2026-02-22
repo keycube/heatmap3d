@@ -1,5 +1,7 @@
 // ===== IMPORTS =====
-// THREE et OrbitControls sont chargés via CDN et accessibles globalement
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'; // Import RoundedBoxGeometry
 
 // ===== SCENE =====
 const scene = new THREE.Scene();
@@ -33,8 +35,10 @@ directionalLight.position.set(5, 5, 5);
 scene.add(directionalLight);
 
 // ===== CUBE (KEY) =====
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshStandardMaterial({ color: 'royalblue' });
+// Use RoundedBoxGeometry for smoother edges
+// Args: width, height, depth, segments, radius
+const geometry = new RoundedBoxGeometry(1, 1, 1, 4, 0.1); 
+const material = new THREE.MeshStandardMaterial({ color: 0xD2B48C }); // Tan / Darker Beige
 const cube = new THREE.Mesh(geometry, material);
 // DO NOT add the cube directly to the scene: scene.add(cube);
 
@@ -42,26 +46,42 @@ const cube = new THREE.Mesh(geometry, material);
 const keycubeGroup = new THREE.Group();
 keycubeGroup.add(cube); // Add the main cube to the group
 
-const keyMaterial = new THREE.MeshStandardMaterial({ color: 'orange' });
+const keyMaterial = new THREE.MeshStandardMaterial({ color: 'white' }); // Base material, will be colored per face
 const keySize = 0.15; // Size of a key
 const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize);
 const spacing = 0.20; // Spacing between keys
 const offset = 0.5; // To place the keys on the surface of the main cube
 
-// Definition of the cube faces
+// Definition of the cube faces mapped to data prefixes
+// MAPPING ASSUMPTION:
+// Top -> Y (Yellow)
+// Bottom -> W (White)
+// Right -> R (Red)
+// Left -> B (Blue)
+// Front -> G (Green)
 const faces = [
-  { axis: 'y', sign: 1 },   // Top face
-  { axis: 'y', sign: -1 },  // Bottom face
-  { axis: 'x', sign: 1 },   // Right face
-  { axis: 'x', sign: -1 },  // Left face
-  { axis: 'z', sign: 1 },   // Front face
+  { axis: 'y', sign: 1, prefix: 'Y', color: 'yellow' },   // Top face
+  { axis: 'y', sign: -1, prefix: 'W', color: 'white' },  // Bottom face
+  { axis: 'x', sign: 1, prefix: 'R', color: 'red' },   // Right face
+  { axis: 'x', sign: -1, prefix: 'B', color: 'blue' },  // Left face
+  { axis: 'z', sign: 1, prefix: 'G', color: 'green' },   // Front face
 ];
 
 // Create keys for 5 faces (4x4 per face)
-faces.forEach(({ axis, sign }) => {
+faces.forEach(({ axis, sign, prefix, color }) => {
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
       const key = new THREE.Mesh(keyGeometry, keyMaterial.clone());
+      key.material.color.set(color); // Set face color
+
+      // Generate ID (e.g., R1, R2... R16)
+      // Note: The order of i, j depends on how the CSV reads (row-major or column-major).
+      // Here we assume row-major (1-4, 5-8, etc.)
+      const keyIndex = (i * 4) + j + 1; // 1 to 16
+      const keyID = `${prefix}${keyIndex}`;
+      
+      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color };
+      key.name = keyID; // Useful for debugging or selecting by name
 
       // Calculate the position of the key on a 2D grid
       const u = (i - 1.5) * spacing;
@@ -107,12 +127,13 @@ function animate() {
   if (hoveredKey !== newHoveredKey) {
     // Reset the old hovered key (if it exists)
     if (hoveredKey) {
-      hoveredKey.material.color.set('orange');
+      hoveredKey.material.color.set(hoveredKey.userData.originalColor);
     }
     
     // Update the new hovered key and change its color
     if (newHoveredKey) {
       newHoveredKey.material.color.set('lightgray');
+      console.log(`Hovered Key: ${newHoveredKey.userData.id}`); // Debug: Show ID in console
     }
     hoveredKey = newHoveredKey;
   }

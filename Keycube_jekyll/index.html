@@ -2,3 +2,39 @@
 layout: default
 title: Keycube d'Accueil
 ---
+
+<div id="intro-overlay" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  cursor: pointer;
+  transition: transform 1s ease-in-out;
+">
+  <h1 style="font-size: 3rem; font-family: sans-serif; text-align: center;">Keycube heatmap project by GuyJC</h1>
+</div>
+
+<script>
+  const overlay = document.getElementById('intro-overlay');
+  
+  function dismissOverlay() {
+    overlay.style.transform = 'translateY(-100%)'; // Slide up effect
+    // Optional: remove element from DOM after transition matches CSS duration
+    setTimeout(() => {
+        overlay.style.display = 'none'; 
+    }, 1000); 
+  }
+
+  // Auto dismiss after 1.5 seconds (1000ms + buffer)
+  setTimeout(dismissOverlay, 1500);
+
+  // Click to dismiss immediately
+  overlay.addEventListener('click', dismissOverlay);
+</script>

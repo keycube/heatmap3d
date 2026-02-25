@@ -1,4 +1,4 @@
 title: Keycube_jekyll
 description: "A minimal Jekyll site with a 3D Keycube model."
-baseurl: "" 
-url: "" 
+baseurl: "/heatmap3d" 
+url: "https://keycube.github.io" 

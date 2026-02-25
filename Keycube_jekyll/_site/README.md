@@ -7,6 +7,7 @@ A simple Jekyll site featuring a 3D Keycube model using Three.js.
 1.  Make sure you have Jekyll installed.
 2.  Run the site:
     ```bash
+    cd Keycube_jekyll
     bundle install
     bundle exec jekyll serve
     ```

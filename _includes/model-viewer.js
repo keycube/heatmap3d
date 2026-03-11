@@ -126,8 +126,8 @@ function animate() {
 
 animate();
 
-// Window resize
-window.addEventListener('resize', () => {
+// Window resize and orientation change
+function handleResize() {
   const container = document.getElementById('model-container');
   if (container) {
     camera.aspect = container.offsetWidth / container.offsetHeight;
@@ -137,15 +137,58 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
   camera.updateProjectionMatrix();
+}
+
+window.addEventListener('resize', handleResize);
+window.addEventListener('orientationchange', () => {
+  setTimeout(handleResize, 100); // Delay for orientation change
 });
 
 // Update model function
 window.updateModel = function(data) {
+  console.log('Updating model with data:', data);
+  
   if (data.handedness) {
     keycubeGroup.scale.x = data.handedness === 'left' ? -1 : 1;
   }
   
-  if (data.color) {
+  if (data.reset) {
+    // Reset all colors to original
+    keycubeGroup.children.forEach(child => {
+      if (child.userData?.originalColor) {
+        child.material.color.set(child.userData.originalColor);
+      }
+    });
+    keycubeGroup.scale.setScalar(1);
+    keycubeGroup.scale.x = 1;
+    return;
+  }
+  
+  if (data.color && data.colorData) {
+    // Visualize preference data as intensity
+    const prefix = data.color;
+    keycubeGroup.children.forEach(child => {
+      if (child.userData?.face === prefix && child.userData?.index) {
+        const intensity = data.colorData[child.userData.index - 1]; // Arrays are 0-indexed
+        // Map intensity (1-10) to color brightness
+        const normalizedIntensity = Math.max(0.3, intensity / 10); // Ensure minimum visibility
+        const color = child.userData.originalColor;
+        const tempColor = new THREE.Color(color);
+        tempColor.multiplyScalar(normalizedIntensity + 0.5);
+        child.material.color.set(tempColor);
+        
+        // Also adjust height based on intensity
+        child.scale.y = 0.5 + (intensity / 10) * 1.5;
+      } else if (child.userData?.face && child.userData.face !== prefix) {
+        // Dim other faces
+        const tempColor = new THREE.Color(child.userData.originalColor);
+        tempColor.multiplyScalar(0.3);
+        child.material.color.set(tempColor);
+        child.scale.y = 1;
+      }
+    });
+  } else if (data.color) {
+    // Simple color highlight without data
     keycubeGroup.children.forEach(child => {
       if (child.userData?.face === data.color) {
         child.material.color.set('orange');
@@ -159,7 +202,9 @@ window.updateModel = function(data) {
     const circumferenceScale = data.circumference ? data.circumference / 200 : 1;
     const lengthScale = data.length ? data.length / 185 : 1;
     const scale = (circumferenceScale + lengthScale) / 2;
+    const currentScaleX = keycubeGroup.scale.x; // Preserve handedness
     keycubeGroup.scale.setScalar(scale);
+    keycubeGroup.scale.x = currentScaleX;
   }
 };
 </script>

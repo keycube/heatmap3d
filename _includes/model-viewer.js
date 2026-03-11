@@ -1,98 +1,81 @@
-// ===== IMPORTS =====
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'; // Import RoundedBoxGeometry
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
-// ===== SCENE =====
+// Scene Setup
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('black');
 
-// ===== CAMERA =====
-const camera = new THREE.PerspectiveCamera(
-  25, // Reduced viewing angle to zoom in
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
+// Camera
+const camera = new THREE.PerspectiveCamera(25, 1, 0.1, 1000);
 camera.position.set(2, 2, 4);
 
-// ===== RENDERER =====
+// Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+const container = document.getElementById('model-container');
+if (container) {
+  renderer.setSize(container.offsetWidth, container.offsetHeight);
+  container.appendChild(renderer.domElement);
+  camera.aspect = container.offsetWidth / container.offsetHeight;
+} else {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+  camera.aspect = window.innerWidth / window.innerHeight;
+}
+camera.updateProjectionMatrix();
 
-// ===== CONTROLS =====
+// Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.enabled = true;
 
-// ===== LIGHTS =====
-const ambientLight = new THREE.AmbientLight('white', 0.6);
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight('white', 0.8);
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(5, 5, 5);
-scene.add(directionalLight);
+scene.add(ambientLight, directionalLight);
 
-// ===== CUBE (KEY) =====
-// Use RoundedBoxGeometry for smoother edges
-// Args: width, height, depth, segments, radius
-const geometry = new RoundedBoxGeometry(1, 1, 1, 4, 0.1); 
-const material = new THREE.MeshStandardMaterial({ color: 0xD2B48C }); // Tan / Darker Beige
-const cube = new THREE.Mesh(geometry, material);
-// DO NOT add the cube directly to the scene: scene.add(cube);
+// Main cube
+const cubeGeometry = new RoundedBoxGeometry(1, 1, 1, 4, 0.1);
+const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xD2B48C });
+const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
 
-// ===== KEYCUBE GROUP (Main Cube + Keys) =====
+// Keycube group
 const keycubeGroup = new THREE.Group();
-keycubeGroup.add(cube); // Add the main cube to the group
+keycubeGroup.add(cube);
 
-const keyMaterial = new THREE.MeshStandardMaterial({ color: 'white' }); // Base material, will be colored per face
-const keySize = 0.15; // Size of a key
+// Key configuration
+const keySize = 0.15;
 const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize);
-const spacing = 0.20; // Spacing between keys
-const offset = 0.5; // To place the keys on the surface of the main cube
+const spacing = 0.20;
+const offset = 0.5;
 
-// Definition of the cube faces mapped to data prefixes
-// MAPPING ASSUMPTION:
-// Top -> Y (Yellow)
-// Bottom -> W (White)
-// Right -> R (Red)
-// Left -> B (Blue)
-// Front -> G (Green)
 const faces = [
-  { axis: 'y', sign: 1, prefix: 'Y', color: 'yellow' },   // Top face
-  { axis: 'y', sign: -1, prefix: 'W', color: 'white' },  // Bottom face
-  { axis: 'x', sign: 1, prefix: 'R', color: 'red' },   // Right face
-  { axis: 'x', sign: -1, prefix: 'B', color: 'blue' },  // Left face
-  { axis: 'z', sign: 1, prefix: 'G', color: 'green' },   // Front face
+  { axis: 'y', sign: 1, prefix: 'Y', color: 'yellow' },
+  { axis: 'y', sign: -1, prefix: 'W', color: 'white' },
+  { axis: 'x', sign: 1, prefix: 'R', color: 'red' },
+  { axis: 'x', sign: -1, prefix: 'B', color: 'blue' },
+  { axis: 'z', sign: 1, prefix: 'G', color: 'green' }
 ];
 
-// Create keys for 5 faces (4x4 per face)
+// Create keys
 faces.forEach(({ axis, sign, prefix, color }) => {
   for (let i = 0; i < 4; i++) {
     for (let j = 0; j < 4; j++) {
-      const key = new THREE.Mesh(keyGeometry, keyMaterial.clone());
-      key.material.color.set(color); // Set face color
-
-      // Generate ID (e.g., R1, R2... R16)
-      // Note: The order of i, j depends on how the CSV reads (row-major or column-major).
-      // Here we assume row-major (1-4, 5-8, etc.)
-      const keyIndex = (i * 4) + j + 1; // 1 to 16
+      const key = new THREE.Mesh(keyGeometry, new THREE.MeshStandardMaterial({ color }));
+      const keyIndex = i * 4 + j + 1;
       const keyID = `${prefix}${keyIndex}`;
       
       key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color };
-      key.name = keyID; // Useful for debugging or selecting by name
+      key.name = keyID;
 
-      // Calculate the position of the key on a 2D grid
       const u = (i - 1.5) * spacing;
       const v = (j - 1.5) * spacing;
 
-      // Position the key on the correct face of the cube
       if (axis === 'y') {
         key.position.set(u, offset * sign, v);
       } else if (axis === 'x') {
         key.position.set(offset * sign, u, v);
-      } else { // axis === 'z'
+      } else {
         key.position.set(u, v, offset * sign);
       }
 
@@ -101,39 +84,35 @@ faces.forEach(({ axis, sign, prefix, color }) => {
   }
 });
 
-scene.add(keycubeGroup); // Add the entire group to the scene
+scene.add(keycubeGroup);
 
-// ===== INTERACTION (Raycaster) =====
+// Interaction
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+let hoveredKey = null;
 
-window.addEventListener('mousemove', (event) => {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-});
+function updateMousePosition(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+}
 
-let hoveredKey = null; // Variable to store the hovered key
+renderer.domElement.addEventListener('mousemove', updateMousePosition);
 
-// ===== ANIMATION =====
+// Animation loop
 function animate() {
   requestAnimationFrame(animate);
 
-  // Hover interaction
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(keycubeGroup.children);
-
   const newHoveredKey = (intersects.length > 0 && intersects[0].object !== cube) ? intersects[0].object : null;
 
   if (hoveredKey !== newHoveredKey) {
-    // Reset the old hovered key (if it exists)
     if (hoveredKey) {
       hoveredKey.material.color.set(hoveredKey.userData.originalColor);
     }
-    
-    // Update the new hovered key and change its color
     if (newHoveredKey) {
       newHoveredKey.material.color.set('lightgray');
-      console.log(`Hovered Key: ${newHoveredKey.userData.id}`); // Debug: Show ID in console
     }
     hoveredKey = newHoveredKey;
   }
@@ -144,9 +123,39 @@ function animate() {
 
 animate();
 
-// ===== RESPONSIVE =====
+// Window resize
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  const container = document.getElementById('model-container');
+  if (container) {
+    camera.aspect = container.offsetWidth / container.offsetHeight;
+    renderer.setSize(container.offsetWidth, container.offsetHeight);
+  } else {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// Update model function
+window.updateModel = function(data) {
+  if (data.handedness) {
+    keycubeGroup.scale.x = data.handedness === 'left' ? -1 : 1;
+  }
+  
+  if (data.color) {
+    keycubeGroup.children.forEach(child => {
+      if (child.userData?.face === data.color) {
+        child.material.color.set('orange');
+      } else if (child.userData?.originalColor) {
+        child.material.color.set(child.userData.originalColor);
+      }
+    });
+  }
+  
+  if (data.circumference || data.length) {
+    const circumferenceScale = data.circumference ? data.circumference / 200 : 1;
+    const lengthScale = data.length ? data.length / 185 : 1;
+    const scale = (circumferenceScale + lengthScale) / 2;
+    keycubeGroup.scale.setScalar(scale);
+  }
+};

@@ -34,16 +34,56 @@ title: Data Visualization
 
 <script>
 document.addEventListener('DOMContentLoaded', (event) => {
-  const buttons = document.querySelectorAll('.data-btn');
-  buttons.forEach(button => {
+  // Handedness buttons
+  const handednessButtons = document.querySelectorAll('.handedness-btn');
+  handednessButtons.forEach(button => {
     button.addEventListener('click', () => {
       const handedness = button.getAttribute('data-handedness');
       console.log('Handedness selected:', handedness);
-      // We will add the interaction with the 3D model here
       if (window.updateModel) {
         window.updateModel({ handedness: handedness });
       }
     });
   });
+
+  // Color buttons
+  const colorButtons = document.querySelectorAll('.color-btn');
+  colorButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const color = button.getAttribute('data-color');
+      console.log('Color selected:', color);
+      if (window.updateModel) {
+        window.updateModel({ color: color });
+      }
+    });
+  });
+
+  // Circumference slider
+  const circumferenceSlider = document.getElementById('circumference');
+  const circumferenceValue = document.getElementById('circumference-value');
+  if (circumferenceSlider) {
+    circumferenceSlider.addEventListener('input', (e) => {
+      const value = e.target.value;
+      circumferenceValue.textContent = value;
+      console.log('Circumference selected:', value);
+      if (window.updateModel) {
+        window.updateModel({ circumference: parseInt(value) });
+      }
+    });
+  }
+
+  // Length slider
+  const lengthSlider = document.getElementById('length');
+  const lengthValue = document.getElementById('length-value');
+  if (lengthSlider) {
+    lengthSlider.addEventListener('input', (e) => {
+      const value = e.target.value;
+      lengthValue.textContent = value;
+      console.log('Length selected:', value);
+      if (window.updateModel) {
+        window.updateModel({ length: parseInt(value) });
+      }
+    });
+  }
 });
 </script>

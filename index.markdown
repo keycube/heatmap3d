@@ -1,25 +1,9 @@
 ---
 layout: default
-title: Keycube d'Accueil
+title: Keycube 3D Model
 ---
 
-<div id="intro-overlay" style="
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: black;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  cursor: pointer;
-  transition: transform 1s ease-in-out;
-">
-  <h1 style="font-size: 3rem; font-family: sans-serif; text-align: center;">Keycube heatmap project by GuyJC</h1>
-</div>
+<div id="model-container" style="width: 100%; height: 100vh;"></div>
 
 <script>
   const overlay = document.getElementById('intro-overlay');

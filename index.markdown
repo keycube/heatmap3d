@@ -17,7 +17,7 @@ title: Keycube 3D Model
   }
 
   // Auto dismiss after 1.5 seconds (1000ms + buffer)
-  setTimeout(dismissOverlay, 1500);
+  setTimeout(dismissOverlay, 4500);
 
   // Click to dismiss immediately
   overlay.addEventListener('click', dismissOverlay);

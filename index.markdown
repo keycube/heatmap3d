@@ -49,8 +49,8 @@ title: Keycube 3D Model
   <code>/dataviz</code> (add this to your current URL)</p>
   
   <p><strong>Example URLs:</strong><br>
-  • Local: <code>localhost:4000/Hello_world_threeJS1/dataviz</code><br>
-  • GitHub: <code>your-username.github.io/Hello_world_threeJS1/dataviz</code></p>
+  • Local: <code>localhost:4000/heatmap3d/dataviz</code><br>
+  • GitHub: <code>keycube.github.io/heatmap3d/dataviz</code></p>
 </div>
 
 <div id="model-container" style="width: 100%; height: 100vh;"></div>

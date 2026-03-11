@@ -4,6 +4,24 @@ title: Data Visualization
 ---
 
 <style>
+.nav-link {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #28a745;
+  color: white;
+  padding: 12px 20px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  transition: all 0.3s;
+}
+.nav-link:hover {
+  background: #1e7e34;
+  transform: translateY(-2px);
+}
 .controls-section { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff; }
 .controls-section h4 { margin-top: 0; color: #007bff; }
 button { padding: 8px 16px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s; font-size: 14px; }
@@ -47,6 +65,8 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
   .controls-section { padding: 20px; }
 }
 </style>
+
+<a href="{{ '/' | relative_url }}" class="nav-link">🏠 Home</a>
 
 <h2>3D Keycube Data Visualization</h2>
 <p><em>Visualize experimental user preference data on a 3D keycube model</em></p>

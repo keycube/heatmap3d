@@ -24,11 +24,14 @@ title: Data Visualization
 }
 .controls-section { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff; }
 .controls-section h4 { margin-top: 0; color: #007bff; }
-button { padding: 8px 16px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s; font-size: 14px; }
+button { padding: 8px 16px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s; font-size: 14px; position: relative; }
 button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+button.active { box-shadow: inset 0 3px 8px rgba(0,0,0,0.3), 0 0 0 2px #ffd700; transform: scale(0.95); }
 .handedness-btn { background: #6c757d; color: white; }
 .handedness-btn:hover { background: #5a6268; }
+.handedness-btn.active { background: #495057; }
 .color-btn:hover { opacity: 0.8; }
+.color-btn.active { opacity: 1; border: 3px solid #333; }
 .reset-btn:hover { background: #6c757d; }
 input[type="range"] { width: 150px; margin: 0 10px; }
 select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; width: 100%; max-width: 400px; }
@@ -66,7 +69,7 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
 }
 </style>
 
-<a href="{{ '/' | relative_url }}" class="nav-link">🏠 Home</a>
+<a href="{{ site.baseurl }}/" class="nav-link">🏠 Home</a>
 
 <h2>3D Keycube Data Visualization</h2>
 <p><em>Visualize experimental user preference data on a 3D keycube model</em></p>
@@ -91,7 +94,7 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
 
   <div class="controls-section">
     <h3>🎨 Color Preferences Visualization</h3>
-    <p><small>Click a color to visualize preference intensity. Key height and brightness represent preference strength (1-10 scale).</small></p>
+    <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
     <div class="button-group">
       <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">🔴 Red Keys (R1-R16)</button>
       <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">🔵 Blue Keys (B1-B16)</button>
@@ -184,6 +187,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const handednessButtons = document.querySelectorAll('.handedness-btn');
   handednessButtons.forEach(button => {
     button.addEventListener('click', () => {
+      // Remove active state from all handedness buttons
+      handednessButtons.forEach(btn => btn.classList.remove('active'));
+      // Add active state to clicked button
+      button.classList.add('active');
+      
       const handedness = button.getAttribute('data-handedness');
       if (window.updateModel) {
         window.updateModel({ handedness: handedness });
@@ -195,6 +203,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const colorButtons = document.querySelectorAll('.color-btn');
   colorButtons.forEach(button => {
     button.addEventListener('click', () => {
+      // Remove active state from all color buttons
+      colorButtons.forEach(btn => btn.classList.remove('active'));
+      // Add active state to clicked button
+      button.classList.add('active');
+      
       const color = button.getAttribute('data-color');
       const colorData = currentParticipant ? currentParticipant[color] : null;
       if (window.updateModel) {
@@ -206,6 +219,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
   // Reset button
   const resetBtn = document.querySelector('.reset-btn');
   resetBtn?.addEventListener('click', () => {
+    // Remove active state from all buttons
+    colorButtons.forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.handedness-btn').forEach(btn => btn.classList.remove('active'));
+    
     if (window.updateModel) {
       window.updateModel({ reset: true });
     }

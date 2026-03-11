@@ -35,7 +35,7 @@ title: Keycube 3D Model
 }
 </style>
 
-<a href="{{ '/dataviz' | relative_url }}" class="nav-link">📊 Data Visualization</a>
+<a href="{{ site.baseurl }}/dataviz" class="nav-link">📊 Data Visualization</a>
 
 <div class="info-panel">
   <h3>🎮 Keycube 3D Model</h3>
@@ -45,7 +45,12 @@ title: Keycube 3D Model
   • Hover: Highlight keys</p>
   
   <p><strong>Want to visualize data?</strong><br>
-  Click the "Data Visualization" button above to access participant data and interactive controls!</p>
+  Click the "Data Visualization" button above or manually go to:<br>
+  <code>/dataviz</code> (add this to your current URL)</p>
+  
+  <p><strong>Example URLs:</strong><br>
+  • Local: <code>localhost:4000/Hello_world_threeJS1/dataviz</code><br>
+  • GitHub: <code>your-username.github.io/Hello_world_threeJS1/dataviz</code></p>
 </div>
 
 <div id="model-container" style="width: 100%; height: 100vh;"></div>

@@ -153,10 +153,13 @@ window.updateModel = function(data) {
   }
   
   if (data.reset) {
-    // Reset all colors to original
+    // Reset all colors and scales to original
     keycubeGroup.children.forEach(child => {
       if (child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
+        // Reset any scale modifications
+        child.scale.set(1, 1, 1);
+        child.position.copy(child.userData.originalPosition || child.position);
       }
     });
     keycubeGroup.scale.setScalar(1);
@@ -165,26 +168,48 @@ window.updateModel = function(data) {
   }
   
   if (data.color && data.colorData) {
-    // Visualize preference data as intensity
+    // Reset all keys to original state first
+    keycubeGroup.children.forEach(child => {
+      if (child.userData?.originalColor) {
+        child.material.color.set(child.userData.originalColor);
+        child.scale.set(1, 1, 1);
+        // Store original position if not stored yet
+        if (!child.userData.originalPosition) {
+          child.userData.originalPosition = child.position.clone();
+        }
+      }
+    });
+    
+    // Apply new visualization - LOWER height for HIGHER preferences
     const prefix = data.color;
     keycubeGroup.children.forEach(child => {
       if (child.userData?.face === prefix && child.userData?.index) {
         const intensity = data.colorData[child.userData.index - 1]; // Arrays are 0-indexed
-        // Map intensity (1-10) to color brightness
-        const normalizedIntensity = Math.max(0.3, intensity / 10); // Ensure minimum visibility
-        const color = child.userData.originalColor;
-        const tempColor = new THREE.Color(color);
+        
+        // Map intensity (1-10) to visual feedback
+        const normalizedIntensity = Math.max(0.3, intensity / 10);
+        
+        // Brighten color based on preference
+        const tempColor = new THREE.Color(child.userData.originalColor);
         tempColor.multiplyScalar(normalizedIntensity + 0.5);
         child.material.color.set(tempColor);
         
-        // Also adjust height based on intensity
-        child.scale.y = 0.5 + (intensity / 10) * 1.5;
+        // LOWER the key for HIGHER preferences (inverted scale)
+        // High preference (9-10) = lower position (0.3-0.4)
+        // Low preference (1-2) = normal position (0.8-1.0)
+        const heightScale = 1.1 - (intensity / 10) * 0.8; // Range: 0.3 to 1.1
+        child.scale.y = heightScale;
+        
+        // Slightly adjust position to keep keys from overlapping
+        const originalY = child.userData.originalPosition.y;
+        child.position.y = originalY + (heightScale - 1) * 0.1;
+        
       } else if (child.userData?.face && child.userData.face !== prefix) {
-        // Dim other faces
+        // Dim other faces but keep normal height
         const tempColor = new THREE.Color(child.userData.originalColor);
         tempColor.multiplyScalar(0.3);
         child.material.color.set(tempColor);
-        child.scale.y = 1;
+        child.scale.set(1, 1, 1);
       }
     });
   } else if (data.color) {
@@ -192,8 +217,10 @@ window.updateModel = function(data) {
     keycubeGroup.children.forEach(child => {
       if (child.userData?.face === data.color) {
         child.material.color.set('orange');
+        child.scale.set(1, 1, 1);
       } else if (child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
+        child.scale.set(1, 1, 1);
       }
     });
   }

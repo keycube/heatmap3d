@@ -108,6 +108,13 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
       <p><small>Select a participant to automatically load their hand measurements and preference data.</small></p>
     </div>
 
+    <div class="controls-section" id="participant-summary" style="display: none;">
+      <h4>Participant Data Summary</h4>
+      <p><strong>Handedness:</strong> <span id="summary-handedness"></span></p>
+      <p><strong>Hand Circumference:</strong> <span id="summary-circumference"></span> mm</p>
+      <p><strong>Hand Length:</strong> <span id="summary-length"></span> mm</p>
+    </div>
+
     <div class="controls-section">
       <h3>🎨 Color Preferences Visualization</h3>
       <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
@@ -199,6 +206,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById('circumference-value').textContent = participant.circumference;
     document.getElementById('length').value = participant.length;
     document.getElementById('length-value').textContent = participant.length;
+
+    // Update summary
+    const summaryPanel = document.getElementById('participant-summary');
+    summaryPanel.style.display = 'block';
+    document.getElementById('summary-handedness').textContent = participant.handedness;
+    document.getElementById('summary-circumference').textContent = participant.circumference;
+    document.getElementById('summary-length').textContent = participant.length;
   }
 
   // Handedness buttons

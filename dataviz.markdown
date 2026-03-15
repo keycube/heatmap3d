@@ -35,7 +35,24 @@ button.active { box-shadow: inset 0 3px 8px rgba(0,0,0,0.3), 0 0 0 2px #ffd700; 
 .reset-btn:hover { background: #6c757d; }
 input[type="range"] { width: 150px; margin: 0 10px; }
 select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 15px; width: 100%; max-width: 400px; }
-#model-container { border: 2px solid #dee2e6; border-radius: 8px; }
+.main-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+#controls {
+  width: 350px;
+  padding: 1em;
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow-y: auto;
+}
+#model-container {
+  flex-grow: 1;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  height: 100%;
+}
 .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
 .measurement-controls { display: flex; gap: 20px; flex-wrap: wrap; }
 .measurement-item { flex: 1; min-width: 200px; }
@@ -74,63 +91,64 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
 <h2>3D Keycube Data Visualization</h2>
 <p><em>Visualize experimental user preference data on a 3D keycube model</em></p>
 
-<div id="model-container" style="width: 100%; height: 80vh; position: relative;"></div>
-
-<div id="controls" style="padding: 1em; background: #f5f5f5; border-radius: 8px;">
-  <div class="controls-section">
-    <h3>🧑‍🔬 Select Participant</h3>
-    <select id="participant-select">
-      <option value="">Choose a participant...</option>
-      {% for row in site.data.preferences %}
-        <option value="{{ forloop.index0 }}" data-handedness="{{ row.Handedness }}" 
-                data-circumference="{{ row.CircumferenceRightHand }}" 
-                data-length="{{ row.LengthRightHand }}">
-          Participant {{ row.Number }} ({{ row.Handedness | capitalize }}, {{ row.CircumferenceRightHand }}mm circumference)
-        </option>
-      {% endfor %}
-    </select>
-    <p><small>Select a participant to automatically load their hand measurements and preference data.</small></p>
-  </div>
-
-  <div class="controls-section">
-    <h3>🎨 Color Preferences Visualization</h3>
-    <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
-    <div class="button-group">
-      <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">🔴 Red Keys (R1-R16)</button>
-      <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">🔵 Blue Keys (B1-B16)</button>
-      <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">🟢 Green Keys (G1-G16)</button>
-      <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">⚪ White Keys (W1-W16)</button>
-      <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">🟡 Yellow Keys (Y1-Y16)</button>
-      <button class="reset-btn" style="background: #868e96; color: white;">🔄 Reset Colors</button>
+<div class="main-container">
+  <div id="controls">
+    <div class="controls-section">
+      <h3>🧑‍🔬 Select Participant</h3>
+      <select id="participant-select">
+        <option value="">Choose a participant...</option>
+        {% for row in site.data.preferences %}
+          <option value="{{ forloop.index0 }}" data-handedness="{{ row.Handedness }}" 
+                  data-circumference="{{ row.CircumferenceRightHand }}" 
+                  data-length="{{ row.LengthRightHand }}">
+            Participant {{ row.Number }} ({{ row.Handedness | capitalize }}, {{ row.CircumferenceRightHand }}mm circumference)
+          </option>
+        {% endfor %}
+      </select>
+      <p><small>Select a participant to automatically load their hand measurements and preference data.</small></p>
     </div>
-  </div>
 
-  <div class="controls-section">
-    <h3>🎛️ Manual Controls</h3>
-    <div class="measurement-controls">
-      <div>
-        <h4>👋 Handedness</h4>
-        <div class="button-group">
-          <button class="handedness-btn" data-handedness="right">✋ Right</button>
-          <button class="handedness-btn" data-handedness="left">🤚 Left</button>
-        </div>
-      </div>
-      
-      <div>
-        <h4>📏 Hand Measurements</h4>
-        <div class="measurement-item">
-          <label for="circumference">Circumference: </label>
-          <input type="range" id="circumference" min="170" max="230" value="200">
-          <span id="circumference-value">200</span>mm
-        </div>
-        <div class="measurement-item">
-          <label for="length">Length: </label>
-          <input type="range" id="length" min="160" max="210" value="185">
-          <span id="length-value">185</span>mm
-        </div>
+    <div class="controls-section">
+      <h3>🎨 Color Preferences Visualization</h3>
+      <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
+      <div class="button-group">
+        <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">🔴 Red Keys (R1-R16)</button>
+        <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">🔵 Blue Keys (B1-B16)</button>
+        <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">🟢 Green Keys (G1-G16)</button>
+        <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">⚪ White Keys (W1-W16)</button>
+        <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">🟡 Yellow Keys (Y1-Y16)</button>
+        <button class="reset-btn" style="background: #868e96; color: white;">🔄 Reset Colors</button>
       </div>
     </div>
+
+    <div class="controls-section">
+      <h3>🎛️ Manual Controls</h3>
+      <div class="measurement-controls">
+        <div>
+          <h4>👋 Handedness</h4>
+          <div class="button-group">
+            <button class="handedness-btn" data-handedness="right">✋ Right</button>
+            <button class="handedness-btn" data-handedness="left">🤚 Left</button>
+          </div>
+        </div>
+        
+        <div>
+          <h4>📏 Hand Measurements</h4>
+          <div class="measurement-item">
+            <label for="circumference">Circumference: </label>
+            <input type="range" id="circumference" min="170" max="230" value="200">
+            <span id="circumference-value">200</span>mm
+          </div>
+          <div class="measurement-item">
+            <label for="length">Length: </label>
+            <input type="range" id="length" min="160" max="210" value="185">
+            <span id="length-value">185</span>mm
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+  <div id="model-container"></div>
 </div>
 
 <script>

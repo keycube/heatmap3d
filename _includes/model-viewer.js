@@ -257,5 +257,40 @@ window.updateModel = function(data) {
   if (data.lightingIntensity !== undefined) {
     directionalLight.intensity = data.lightingIntensity;
   }
+
+  // Heatmap visualization (for aggregate/reachability modes)
+  if (data.heatmap) {
+    const heatmapData = data.heatmap; // { R: [values], B: [...], G: [...], W: [...], Y: [...] }
+    const min = data.heatmapMin !== undefined ? data.heatmapMin : 0;
+    const max = data.heatmapMax !== undefined ? data.heatmapMax : 1;
+    const range = max - min || 1;
+
+    keycubeGroup.children.forEach(child => {
+      if (child.userData?.face && child.userData?.index && heatmapData[child.userData.face]) {
+        const value = heatmapData[child.userData.face][child.userData.index - 1];
+        const normalized = Math.max(0, Math.min(1, (value - min) / range));
+
+        // Store original position
+        if (!child.userData.originalPosition) {
+          child.userData.originalPosition = child.position.clone();
+        }
+
+        // Heatmap color: red (0) -> yellow (0.5) -> green (1)
+        const hue = normalized * 0.33; // 0 = red, 0.17 = yellow, 0.33 = green
+        const color = new THREE.Color();
+        color.setHSL(hue, 0.9, 0.5);
+        child.material.color.set(color);
+
+        // Scale height based on value
+        const heightScale = 0.4 + normalized * 0.8;
+        child.scale.y = heightScale;
+        const originalY = child.userData.originalPosition.y;
+        child.position.y = originalY + (heightScale - 1) * 0.05;
+      } else if (child !== cube && child.userData?.originalColor) {
+        child.material.color.set(child.userData.originalColor);
+        child.scale.set(1, 1, 1);
+      }
+    });
+  }
 };
 </script>

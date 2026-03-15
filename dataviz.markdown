@@ -215,6 +215,65 @@ input[type="range"]::-moz-range-thumb {
   background: #0056b3;
 }
 
+/* Visualization Mode Buttons */
+.mode-btn {
+  background: #343a40;
+  color: white;
+  flex: 1;
+  min-width: 80px;
+  font-size: 12px;
+  padding: 10px 8px;
+}
+.mode-btn:hover {
+  background: #495057;
+}
+.mode-btn.active {
+  background: #007bff;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.3), 0 0 0 2px #66b3ff;
+}
+
+/* Study Info */
+.study-info { font-size: 13px; line-height: 1.6; }
+.study-info .stat { color: #007bff; font-weight: bold; }
+.study-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 10px 0;
+}
+.study-stat-item {
+  background: #e9ecef;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+}
+.study-stat-item strong { display: block; font-size: 16px; color: #007bff; }
+
+/* Heatmap Legend */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.heatmap-gradient {
+  flex: 1;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(to right, #ff0000, #ff8800, #ffff00, #88ff00, #00ff00);
+}
+
+/* Finger selector */
+.finger-select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; }
+
+/* Mode description */
+#mode-description { margin: 10px 0 0; padding: 8px; background: #e8f4fd; border-radius: 4px; font-size: 12px; border-left: 3px solid #007bff; }
+
+/* Aggregate info */
+.aggregate-info { padding: 8px; background: #f0f7e8; border-radius: 4px; font-size: 12px; border-left: 3px solid #28a745; margin-top: 8px; }
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .controls-section { padding: 10px; margin-bottom: 15px; }
@@ -248,6 +307,43 @@ input[type="range"]::-moz-range-thumb {
 
 <div class="main-container">
   <div id="controls">
+    <div class="controls-section active">
+      <h3>Visualization Mode</h3>
+      <div class="section-content" style="display: block;">
+        <div class="button-group">
+          <button class="mode-btn active" data-mode="preference" data-tooltip="View individual participant preferences">Preference</button>
+          <button class="mode-btn" data-mode="aggregate" data-tooltip="View mean across all 22 participants">Aggregate</button>
+          <button class="mode-btn" data-mode="reachability" data-tooltip="View finger reachability heatmap">Reachability</button>
+        </div>
+        <div id="mode-description">Select a participant then click a face color to view their finger-to-key preferences (lower key = higher preference).</div>
+        <div id="reachability-options" style="display:none;">
+          <label for="finger-select"><strong>Finger filter:</strong></label>
+          <select class="finger-select" id="finger-select">
+            <option value="total">All Fingers (Total)</option>
+            <optgroup label="Left Hand">
+              <option value="LT">Left Thumb</option>
+              <option value="LI">Left Index</option>
+              <option value="LM">Left Middle</option>
+              <option value="LR">Left Ring</option>
+              <option value="LL">Left Little</option>
+            </optgroup>
+            <optgroup label="Right Hand">
+              <option value="RT">Right Thumb</option>
+              <option value="RI">Right Index</option>
+              <option value="RM">Right Middle</option>
+              <option value="RR">Right Ring</option>
+              <option value="RL">Right Little</option>
+            </optgroup>
+          </select>
+          <div class="heatmap-legend">
+            <span>Low</span>
+            <div class="heatmap-gradient"></div>
+            <span>High</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="controls-section active">
       <h3>Select Participant</h3>
       <div class="section-content" style="display: block;">
@@ -334,6 +430,23 @@ input[type="range"]::-moz-range-thumb {
     </div>
 
     <div class="controls-section">
+      <h3>Study Info</h3>
+      <div class="section-content">
+        <div class="study-info">
+          <div class="study-stat-grid">
+            <div class="study-stat-item"><strong>31</strong>Participants (Study 1)</div>
+            <div class="study-stat-item"><strong>22</strong>Participants (Study 2)</div>
+            <div class="study-stat-item"><strong>77.4%</strong>Preferred Diagonal</div>
+            <div class="study-stat-item"><strong>80</strong>Keys (5 faces)</div>
+          </div>
+          <p><strong>Study 1:</strong> Identified preferred holding positions. <span class="stat">Diagonal position</span> chosen by 77.4% of participants (both hands, forearms bent, touchscreen down).</p>
+          <p><strong>Study 2:</strong> Mapped finger-to-key preferences and reachability in diagonal position. Thumbs cover the widest area (red + internal faces).</p>
+          <p><strong>Face orientation:</strong> Red (top), Blue &amp; Yellow (external), White &amp; Green (internal, facing body).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-section">
         <h3>Scene &amp; View</h3>
         <div class="section-content">
             <button class="scene-btn" id="reset-view-btn" data-tooltip="Reset camera to default position">Reset View</button>
@@ -366,8 +479,149 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }{% unless forloop.last %},{% endunless %}
     {% endfor %}
   ];
+
+  // Reachability data (total per key, summed across all fingers per participant)
+  {% assign fingers = "LT,LI,LM,LR,LL,RT,RI,RM,RR,RL" | split: "," %}
+  {% assign faceNames = "R,B,G,W,Y" | split: "," %}
+  const reachabilityData = [
+    {% for row in site.data.reachability %}
+    {
+      number: {{ row.Number }},
+      {% for face in faceNames %}
+      {{ face }}: [{% for k in (1..16) %}{% assign total = 0 %}{% for f in fingers %}{% capture col %}{{ f }}-{{ face }}{{ k }}{% endcapture %}{% assign val = row[col] | plus: 0 %}{% assign total = total | plus: val %}{% endfor %}{{ total }}{% unless forloop.last %},{% endunless %}{% endfor %}]{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+
+  // Per-finger reachability data
+  const perFingerReachability = {};
+  {% for f in fingers %}
+  perFingerReachability['{{ f }}'] = [
+    {% for row in site.data.reachability %}
+    {
+      {% for face in faceNames %}
+      {{ face }}: [{% for k in (1..16) %}{% capture col %}{{ f }}-{{ face }}{{ k }}{% endcapture %}{{ row[col] | plus: 0 }}{% unless forloop.last %},{% endunless %}{% endfor %}]{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+  {% endfor %}
   
   let currentParticipant = null;
+  let currentMode = 'preference'; // 'preference', 'aggregate', 'reachability'
+
+  // Compute aggregate mean preference across all participants
+  const aggregatePreference = { R: [], B: [], G: [], W: [], Y: [] };
+  ['R','B','G','W','Y'].forEach(face => {
+    for (let i = 0; i < 16; i++) {
+      let sum = 0;
+      participantsData.forEach(p => { sum += p[face][i]; });
+      aggregatePreference[face].push(+(sum / participantsData.length).toFixed(2));
+    }
+  });
+
+  // Compute aggregate reachability (total across all participants, all fingers)
+  const aggregateReachability = { R: [], B: [], G: [], W: [], Y: [] };
+  ['R','B','G','W','Y'].forEach(face => {
+    for (let i = 0; i < 16; i++) {
+      let sum = 0;
+      reachabilityData.forEach(p => { sum += p[face][i]; });
+      aggregateReachability[face].push(sum);
+    }
+  });
+
+  // Compute per-finger aggregate reachability
+  function getFingerReachability(finger) {
+    const result = { R: [], B: [], G: [], W: [], Y: [] };
+    const fingerData = perFingerReachability[finger];
+    if (!fingerData) return result;
+    ['R','B','G','W','Y'].forEach(face => {
+      for (let i = 0; i < 16; i++) {
+        let sum = 0;
+        fingerData.forEach(p => { sum += p[face][i]; });
+        result[face].push(sum);
+      }
+    });
+    return result;
+  }
+
+  // Find min/max across all faces of a dataset
+  function getRange(data) {
+    let min = Infinity, max = -Infinity;
+    ['R','B','G','W','Y'].forEach(face => {
+      data[face].forEach(v => {
+        if (v < min) min = v;
+        if (v > max) max = v;
+      });
+    });
+    return { min, max };
+  }
+
+  // Mode descriptions
+  const modeDescriptions = {
+    preference: 'Select a participant then click a face color to view their finger-to-key preferences (lower key = higher preference).',
+    aggregate: 'Shows the mean preference values averaged across all 22 participants. Click a face to highlight it, or view all faces at once.',
+    reachability: 'Heatmap of finger-to-key reachability scores. Green = easily reachable, Red = unreachable. Filter by specific finger below.'
+  };
+
+  // Mode switching
+  const modeButtons = document.querySelectorAll('.mode-btn');
+  const modeDescription = document.getElementById('mode-description');
+  const reachabilityOptions = document.getElementById('reachability-options');
+
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      modeButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.getAttribute('data-mode');
+      modeDescription.textContent = modeDescriptions[currentMode];
+      reachabilityOptions.style.display = currentMode === 'reachability' ? 'block' : 'none';
+
+      // Reset model when switching modes
+      if (window.updateModel) window.updateModel({ reset: true });
+      colorButtons.forEach(b => b.classList.remove('active'));
+
+      // Auto-apply for aggregate and reachability
+      if (currentMode === 'aggregate') {
+        applyAggregateView();
+      } else if (currentMode === 'reachability') {
+        applyReachabilityView();
+      }
+    });
+  });
+
+  // Apply aggregate heatmap
+  function applyAggregateView(face) {
+    if (!window.updateModel) return;
+    if (face) {
+      // Show single face with aggregate data
+      window.updateModel({ color: face, colorData: aggregatePreference[face] });
+    } else {
+      // Show all faces as heatmap
+      const range = getRange(aggregatePreference);
+      window.updateModel({ heatmap: aggregatePreference, heatmapMin: range.min, heatmapMax: range.max });
+    }
+  }
+
+  // Apply reachability heatmap
+  function applyReachabilityView() {
+    if (!window.updateModel) return;
+    const finger = document.getElementById('finger-select').value;
+    let data;
+    if (finger === 'total') {
+      data = aggregateReachability;
+    } else {
+      data = getFingerReachability(finger);
+    }
+    const range = getRange(data);
+    window.updateModel({ heatmap: data, heatmapMin: range.min, heatmapMax: range.max });
+  }
+
+  // Finger filter for reachability
+  document.getElementById('finger-select')?.addEventListener('change', () => {
+    if (currentMode === 'reachability') applyReachabilityView();
+  });
 
   // Participant selector
   const participantSelect = document.getElementById('participant-select');
@@ -409,11 +663,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
   const handednessButtons = document.querySelectorAll('.handedness-btn');
   handednessButtons.forEach(button => {
     button.addEventListener('click', () => {
-      // Remove active state from all handedness buttons
       handednessButtons.forEach(btn => btn.classList.remove('active'));
-      // Add active state to clicked button
       button.classList.add('active');
-      
       const handedness = button.getAttribute('data-handedness');
       if (window.updateModel) {
         window.updateModel({ handedness: handedness });
@@ -421,33 +672,37 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
   });
 
-  // Color buttons with data visualization
+  // Color buttons - behavior depends on mode
   const colorButtons = document.querySelectorAll('.color-btn');
   colorButtons.forEach(button => {
     button.addEventListener('click', () => {
-      // Remove active state from all color buttons
       colorButtons.forEach(btn => btn.classList.remove('active'));
-      // Add active state to clicked button
       button.classList.add('active');
-      
       const color = button.getAttribute('data-color');
-      const colorData = currentParticipant ? currentParticipant[color] : null;
-      if (window.updateModel) {
-        window.updateModel({ color: color, colorData: colorData });
+
+      if (currentMode === 'aggregate') {
+        applyAggregateView(color);
+      } else if (currentMode === 'preference') {
+        const colorData = currentParticipant ? currentParticipant[color] : null;
+        if (window.updateModel) {
+          window.updateModel({ color: color, colorData: colorData });
+        }
       }
+      // In reachability mode, color buttons don't apply (heatmap shows all faces)
     });
   });
 
   // Reset button
   const resetBtn = document.querySelector('.reset-btn');
   resetBtn?.addEventListener('click', () => {
-    // Remove active state from all buttons
     colorButtons.forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.handedness-btn').forEach(btn => btn.classList.remove('active'));
-    
     if (window.updateModel) {
       window.updateModel({ reset: true });
     }
+    // Re-apply mode view
+    if (currentMode === 'aggregate') applyAggregateView();
+    else if (currentMode === 'reachability') applyReachabilityView();
   });
 
   // Sliders
@@ -471,8 +726,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
   });
 
-  // Make participant data available globally
+  // Make data available globally
   window.participantsData = participantsData;
+  window.reachabilityData = reachabilityData;
+  window.aggregatePreference = aggregatePreference;
+  window.aggregateReachability = aggregateReachability;
 
   // Collapsible sections
   document.querySelectorAll('.controls-section h3').forEach(header => {

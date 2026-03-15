@@ -146,6 +146,75 @@ input[type="color"]::-webkit-color-swatch {
   border-radius: 50%;
 }
 
+/* Display option layout */
+.display-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* Tooltips */
+[data-tooltip] {
+  position: relative;
+}
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* Improved Sliders */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #ddd;
+  border-radius: 3px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #007bff;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Scene controls */
+.scene-btn {
+  background: #007bff;
+  color: white;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.scene-btn:hover {
+  background: #0056b3;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .controls-section { padding: 10px; margin-bottom: 15px; }
@@ -208,12 +277,12 @@ input[type="color"]::-webkit-color-swatch {
       <div class="section-content">
         <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
         <div class="button-group">
-          <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">Red Keys (R1-R16)</button>
-          <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">Blue Keys (B1-B16)</button>
-          <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">Green Keys (G1-G16)</button>
-          <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">White Keys (W1-W16)</button>
-          <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">Yellow Keys (Y1-Y16)</button>
-          <button class="reset-btn" style="background: #868e96; color: white;">Reset Colors</button>
+          <button class="color-btn" data-color="R" data-tooltip="Show red face preference data" style="background: #ff6b6b; color: white;">Red Keys (R1-R16)</button>
+          <button class="color-btn" data-color="B" data-tooltip="Show blue face preference data" style="background: #4dabf7; color: white;">Blue Keys (B1-B16)</button>
+          <button class="color-btn" data-color="G" data-tooltip="Show green face preference data" style="background: #51cf66; color: white;">Green Keys (G1-G16)</button>
+          <button class="color-btn" data-color="W" data-tooltip="Show white face preference data" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">White Keys (W1-W16)</button>
+          <button class="color-btn" data-color="Y" data-tooltip="Show yellow face preference data" style="background: #ffd43b; color: black;">Yellow Keys (Y1-Y16)</button>
+          <button class="reset-btn" data-tooltip="Reset all keys to original colors" style="background: #868e96; color: white;">Reset Colors</button>
         </div>
       </div>
     </div>
@@ -225,8 +294,8 @@ input[type="color"]::-webkit-color-swatch {
           <div>
             <h4>Handedness</h4>
             <div class="button-group">
-              <button class="handedness-btn" data-handedness="right">Right</button>
-              <button class="handedness-btn" data-handedness="left">Left</button>
+              <button class="handedness-btn" data-tooltip="Mirror cube for right hand" data-handedness="right">Right</button>
+              <button class="handedness-btn" data-tooltip="Mirror cube for left hand" data-handedness="left">Left</button>
             </div>
           </div>
           
@@ -257,9 +326,21 @@ input[type="color"]::-webkit-color-swatch {
                     <span class="slider"></span>
                 </label>
             </div>
-            <div class="display-option color-picker-wrapper">
+            <div class="display-option">
                 <label for="bg-color-picker">Background</label>
                 <input type="color" id="bg-color-picker" value="#000000">
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-section">
+        <h3>Scene &amp; View</h3>
+        <div class="section-content">
+            <button class="scene-btn" id="reset-view-btn" data-tooltip="Reset camera to default position">Reset View</button>
+            <div class="display-option">
+                <label for="light-intensity">Lighting</label>
+                <input type="range" id="light-intensity" min="0" max="200" value="80">
+                <span id="light-intensity-value">80</span>%
             </div>
         </div>
     </div>
@@ -392,42 +473,44 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
   // Make participant data available globally
   window.participantsData = participantsData;
-});
 
-// Collapsible sections
+  // Collapsible sections
   document.querySelectorAll('.controls-section h3').forEach(header => {
-    header.addEventListener('click', (event) => {
+    header.addEventListener('click', () => {
       const section = header.closest('.controls-section');
-      if (section) {
-        section.classList.toggle('active');
-      }
+      section.classList.toggle('active');
     });
   });
 
-  // Set initial state for collapsible sections
-  document.querySelectorAll('.controls-section').forEach(section => {
-    if (section.classList.contains('active')) {
-      section.querySelector('.section-content').style.display = 'block';
-    } else {
-      const content = section.querySelector('.section-content');
-      if (content) {
-        content.style.display = 'none';
-      }
-    }
-  });
-
-  // Display Options
-  const wireframeToggle = document.getElementById('wireframe-toggle');
-  wireframeToggle?.addEventListener('change', (e) => {
+  // Display Options - Wireframe
+  document.getElementById('wireframe-toggle')?.addEventListener('change', (e) => {
     if (window.updateModel) {
       window.updateModel({ wireframe: e.target.checked });
     }
   });
 
-  const bgColorPicker = document.getElementById('bg-color-picker');
-  bgColorPicker?.addEventListener('input', (e) => {
+  // Display Options - Background Color
+  document.getElementById('bg-color-picker')?.addEventListener('input', (e) => {
     if (window.updateModel) {
       window.updateModel({ backgroundColor: e.target.value });
+    }
+  });
+
+  // Scene & View - Reset View
+  document.getElementById('reset-view-btn')?.addEventListener('click', () => {
+    if (window.updateModel) {
+      window.updateModel({ resetView: true });
+    }
+  });
+
+  // Scene & View - Lighting Intensity
+  const lightSlider = document.getElementById('light-intensity');
+  const lightValue = document.getElementById('light-intensity-value');
+  lightSlider?.addEventListener('input', (e) => {
+    const val = e.target.value;
+    lightValue.textContent = val;
+    if (window.updateModel) {
+      window.updateModel({ lightingIntensity: parseInt(val) / 100 });
     }
   });
 });

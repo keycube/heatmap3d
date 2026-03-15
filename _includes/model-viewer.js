@@ -12,6 +12,7 @@ scene.background = new THREE.Color('black');
 // Camera
 const camera = new THREE.PerspectiveCamera(25, 1, 0.1, 1000);
 camera.position.set(2, 2, 4);
+const initialCameraPosition = camera.position.clone();
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -30,6 +31,7 @@ camera.updateProjectionMatrix();
 // Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
+controls.saveState();
 
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -244,6 +246,16 @@ window.updateModel = function(data) {
 
   if (data.backgroundColor) {
       renderer.setClearColor(data.backgroundColor);
+  }
+
+  if (data.resetView) {
+    camera.position.copy(initialCameraPosition);
+    camera.lookAt(0, 0, 0);
+    controls.reset();
+  }
+
+  if (data.lightingIntensity !== undefined) {
+    directionalLight.intensity = data.lightingIntensity;
   }
 };
 </script>

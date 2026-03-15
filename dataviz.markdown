@@ -393,4 +393,43 @@ document.addEventListener('DOMContentLoaded', (event) => {
   // Make participant data available globally
   window.participantsData = participantsData;
 });
+
+// Collapsible sections
+  document.querySelectorAll('.controls-section h3').forEach(header => {
+    header.addEventListener('click', (event) => {
+      const section = header.closest('.controls-section');
+      if (section) {
+        section.classList.toggle('active');
+      }
+    });
+  });
+
+  // Set initial state for collapsible sections
+  document.querySelectorAll('.controls-section').forEach(section => {
+    if (section.classList.contains('active')) {
+      section.querySelector('.section-content').style.display = 'block';
+    } else {
+      const content = section.querySelector('.section-content');
+      if (content) {
+        content.style.display = 'none';
+      }
+    }
+  });
+
+  // Display Options
+  const wireframeToggle = document.getElementById('wireframe-toggle');
+  wireframeToggle?.addEventListener('change', (e) => {
+    if (window.updateModel) {
+      window.updateModel({ wireframe: e.target.checked });
+    }
+  });
+
+  const bgColorPicker = document.getElementById('bg-color-picker');
+  bgColorPicker?.addEventListener('input', (e) => {
+    if (window.updateModel) {
+      window.updateModel({ backgroundColor: e.target.value });
+    }
+  });
+});
 </script>
+<script type="module" src="{{ site.baseurl }}/_includes/model-viewer.js"></script>

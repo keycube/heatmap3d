@@ -86,15 +86,12 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
 }
 </style>
 
-<a href="{{ site.baseurl }}/" class="nav-link">🏠 Home</a>
-
-<h2>3D Keycube Data Visualization</h2>
-<p><em>Visualize experimental user preference data on a 3D keycube model</em></p>
+<a href="{{ site.baseurl }}/" class="nav-link">Home</a>
 
 <div class="main-container">
   <div id="controls">
     <div class="controls-section">
-      <h3>🧑‍🔬 Select Participant</h3>
+      <h3>Select Participant</h3>
       <select id="participant-select">
         <option value="">Choose a participant...</option>
         {% for row in site.data.preferences %}
@@ -116,31 +113,31 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
     </div>
 
     <div class="controls-section">
-      <h3>🎨 Color Preferences Visualization</h3>
+      <h3>Color Preferences Visualization</h3>
       <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
       <div class="button-group">
-        <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">🔴 Red Keys (R1-R16)</button>
-        <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">🔵 Blue Keys (B1-B16)</button>
-        <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">🟢 Green Keys (G1-G16)</button>
-        <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">⚪ White Keys (W1-W16)</button>
-        <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">🟡 Yellow Keys (Y1-Y16)</button>
-        <button class="reset-btn" style="background: #868e96; color: white;">🔄 Reset Colors</button>
+        <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">Red Keys (R1-R16)</button>
+        <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">Blue Keys (B1-B16)</button>
+        <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">Green Keys (G1-G16)</button>
+        <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">White Keys (W1-W16)</button>
+        <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">Yellow Keys (Y1-Y16)</button>
+        <button class="reset-btn" style="background: #868e96; color: white;">Reset Colors</button>
       </div>
     </div>
 
     <div class="controls-section">
-      <h3>🎛️ Manual Controls</h3>
+      <h3>Manual Controls</h3>
       <div class="measurement-controls">
         <div>
-          <h4>👋 Handedness</h4>
+          <h4>Handedness</h4>
           <div class="button-group">
-            <button class="handedness-btn" data-handedness="right">✋ Right</button>
-            <button class="handedness-btn" data-handedness="left">🤚 Left</button>
+            <button class="handedness-btn" data-handedness="right">Right</button>
+            <button class="handedness-btn" data-handedness="left">Left</button>
           </div>
         </div>
         
         <div>
-          <h4>📏 Hand Measurements</h4>
+          <h4>Hand Measurements</h4>
           <div class="measurement-item">
             <label for="circumference">Circumference: </label>
             <input type="range" id="circumference" min="170" max="230" value="200">

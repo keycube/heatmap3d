@@ -23,3 +23,8 @@ body, html {
     font-weight: bold;
     text-shadow: 2px 2px 8px rgba(255, 255, 255, 0.3);
 }
+
+body.fade-out {
+    opacity: 0;
+    transition: opacity 1s ease-out;
+}

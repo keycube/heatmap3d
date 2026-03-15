@@ -233,5 +233,17 @@ window.updateModel = function(data) {
     keycubeGroup.scale.setScalar(scale);
     keycubeGroup.scale.x = currentScaleX;
   }
+
+  if (data.wireframe !== undefined) {
+    scene.traverse(function (child) {
+        if (child.isMesh) {
+            child.material.wireframe = data.wireframe;
+        }
+    });
+  }
+
+  if (data.backgroundColor) {
+      renderer.setClearColor(data.backgroundColor);
+  }
 };
 </script>

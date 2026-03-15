@@ -57,6 +57,95 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
 .measurement-controls { display: flex; gap: 20px; flex-wrap: wrap; }
 .measurement-item { flex: 1; min-width: 200px; }
 
+/* Collapsible Sections */
+.controls-section h3 {
+  cursor: pointer;
+  position: relative;
+  padding-right: 25px;
+}
+.controls-section h3::after {
+  content: '+';
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  font-weight: bold;
+}
+.controls-section.active h3::after {
+  content: '−';
+}
+.section-content {
+  display: none;
+  padding-top: 10px;
+}
+.controls-section.active .section-content {
+  display: block;
+}
+
+/* Toggle Switch for Wireframe */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: #2196F3;
+}
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Background Color Picker */
+.color-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+input[type="color"] {
+  -webkit-appearance: none;
+  width: 40px;
+  height: 40px;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: 1px solid #ccc;
+  border-radius: 50%;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .controls-section { padding: 10px; margin-bottom: 15px; }
@@ -90,19 +179,21 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
 
 <div class="main-container">
   <div id="controls">
-    <div class="controls-section">
+    <div class="controls-section active">
       <h3>Select Participant</h3>
-      <select id="participant-select">
-        <option value="">Choose a participant...</option>
-        {% for row in site.data.preferences %}
-          <option value="{{ forloop.index0 }}" data-handedness="{{ row.Handedness }}" 
-                  data-circumference="{{ row.CircumferenceRightHand }}" 
-                  data-length="{{ row.LengthRightHand }}">
-            Participant {{ row.Number }} ({{ row.Handedness | capitalize }}, {{ row.CircumferenceRightHand }}mm circumference)
-          </option>
-        {% endfor %}
-      </select>
-      <p><small>Select a participant to automatically load their hand measurements and preference data.</small></p>
+      <div class="section-content" style="display: block;">
+        <select id="participant-select">
+          <option value="">Choose a participant...</option>
+          {% for row in site.data.preferences %}
+            <option value="{{ forloop.index0 }}" data-handedness="{{ row.Handedness }}" 
+                    data-circumference="{{ row.CircumferenceRightHand }}" 
+                    data-length="{{ row.LengthRightHand }}">
+              Participant {{ row.Number }} ({{ row.Handedness | capitalize }}, {{ row.CircumferenceRightHand }}mm circumference)
+            </option>
+          {% endfor %}
+        </select>
+        <p><small>Select a participant to automatically load their hand measurements and preference data.</small></p>
+      </div>
     </div>
 
     <div class="controls-section" id="participant-summary" style="display: none;">
@@ -114,42 +205,63 @@ select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom
 
     <div class="controls-section">
       <h3>Color Preferences Visualization</h3>
-      <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
-      <div class="button-group">
-        <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">Red Keys (R1-R16)</button>
-        <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">Blue Keys (B1-B16)</button>
-        <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">Green Keys (G1-G16)</button>
-        <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">White Keys (W1-W16)</button>
-        <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">Yellow Keys (Y1-Y16)</button>
-        <button class="reset-btn" style="background: #868e96; color: white;">Reset Colors</button>
+      <div class="section-content">
+        <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
+        <div class="button-group">
+          <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">Red Keys (R1-R16)</button>
+          <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">Blue Keys (B1-B16)</button>
+          <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">Green Keys (G1-G16)</button>
+          <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">White Keys (W1-W16)</button>
+          <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">Yellow Keys (Y1-Y16)</button>
+          <button class="reset-btn" style="background: #868e96; color: white;">Reset Colors</button>
+        </div>
       </div>
     </div>
 
     <div class="controls-section">
       <h3>Manual Controls</h3>
-      <div class="measurement-controls">
-        <div>
-          <h4>Handedness</h4>
-          <div class="button-group">
-            <button class="handedness-btn" data-handedness="right">Right</button>
-            <button class="handedness-btn" data-handedness="left">Left</button>
+      <div class="section-content">
+        <div class="measurement-controls">
+          <div>
+            <h4>Handedness</h4>
+            <div class="button-group">
+              <button class="handedness-btn" data-handedness="right">Right</button>
+              <button class="handedness-btn" data-handedness="left">Left</button>
+            </div>
           </div>
-        </div>
-        
-        <div>
-          <h4>Hand Measurements</h4>
-          <div class="measurement-item">
-            <label for="circumference">Circumference: </label>
-            <input type="range" id="circumference" min="170" max="230" value="200">
-            <span id="circumference-value">200</span>mm
-          </div>
-          <div class="measurement-item">
-            <label for="length">Length: </label>
-            <input type="range" id="length" min="160" max="210" value="185">
-            <span id="length-value">185</span>mm
+          
+          <div>
+            <h4>Hand Measurements</h4>
+            <div class="measurement-item">
+              <label for="circumference">Circumference: </label>
+              <input type="range" id="circumference" min="170" max="230" value="200">
+              <span id="circumference-value">200</span>mm
+            </div>
+            <div class="measurement-item">
+              <label for="length">Length: </label>
+              <input type="range" id="length" min="160" max="210" value="185">
+              <span id="length-value">185</span>mm
+            </div>
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="controls-section">
+        <h3>Display Options</h3>
+        <div class="section-content">
+            <div class="display-option">
+                <label for="wireframe-toggle">Wireframe</label>
+                <label class="switch">
+                    <input type="checkbox" id="wireframe-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="display-option color-picker-wrapper">
+                <label for="bg-color-picker">Background</label>
+                <input type="color" id="bg-color-picker" value="#000000">
+            </div>
+        </div>
     </div>
   </div>
   <div id="model-container"></div>

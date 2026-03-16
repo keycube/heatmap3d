@@ -91,37 +91,9 @@ faces.forEach(({ axis, sign, prefix, color }) => {
 
 scene.add(keycubeGroup);
 
-// Interaction
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-let hoveredKey = null;
-
-function updateMousePosition(event) {
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-}
-
-renderer.domElement.addEventListener('mousemove', updateMousePosition);
-
 // Animation loop
 function animate() {
   requestAnimationFrame(animate);
-
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(keycubeGroup.children);
-  const newHoveredKey = (intersects.length > 0 && intersects[0].object !== cube) ? intersects[0].object : null;
-
-  if (hoveredKey !== newHoveredKey) {
-    if (hoveredKey) {
-      hoveredKey.material.color.set(hoveredKey.userData.originalColor);
-    }
-    if (newHoveredKey) {
-      newHoveredKey.material.color.set('lightgray');
-    }
-    hoveredKey = newHoveredKey;
-  }
-
   controls.update();
   renderer.render(scene, camera);
 }

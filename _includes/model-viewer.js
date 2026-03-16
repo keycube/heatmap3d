@@ -62,6 +62,27 @@ const faces = [
   { axis: 'z', sign: 1, prefix: 'G', color: 'green' }
 ];
 
+// Create text label sprite
+function createTextSprite(text) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.font = 'bold 52px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 5;
+  ctx.strokeText(text, 64, 64);
+  ctx.fillStyle = 'white';
+  ctx.fillText(text, 64, 64);
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(0.11, 0.11, 0.11);
+  return sprite;
+}
+
 // Create keys
 faces.forEach(({ axis, sign, prefix, color }) => {
   for (let i = 0; i < 4; i++) {
@@ -85,6 +106,19 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       }
 
       keycubeGroup.add(key);
+
+      // Add text label floating just above the key
+      const label = createTextSprite(keyID);
+      label.userData = { isLabel: true };
+      const labelOffset = 0.09;
+      if (axis === 'y') {
+        label.position.set(u, (offset + labelOffset) * sign, v);
+      } else if (axis === 'x') {
+        label.position.set((offset + labelOffset) * sign, u, v);
+      } else {
+        label.position.set(u, v, (offset + labelOffset) * sign);
+      }
+      keycubeGroup.add(label);
     }
   }
 });

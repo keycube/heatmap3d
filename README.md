@@ -1,163 +1,254 @@
-# Heatmap 3D - Three.js Cube
+# Keycube Heatmap — Project Report
 
-This project involves designing and developing a web application for the interactive three-dimensional visualization of a cubic keyboard. It integrates experimental data from research on finger usage and preferences during typing.
-
-The data, provided by the project supervisor, describes the finger-to-key association preferences observed during user experiments. The goal is to leverage this data to create a visual and analytical representation of these preferences using the Three.js library in JavaScript.
-
-The application is designed to be generic and reusable, allowing it to be adapted for other similar datasets in the future without major changes to the software architecture.
-
-This document explains the role of each Three.js feature used in this project.
+**Project:** 3D Interactive Visualization of Keycube User Study Data  
+**Repository:** [keycube/heatmap3d](https://github.com/keycube/heatmap3d)  
+**Technology Stack:** Jekyll (Ruby) · Three.js (WebGL) · GitHub Pages  
+**Date:** March 2026
 
 ---
 
-## Table of Contents
-1.  [Core Components](#1-core-components)
-2.  [Camera & Controls](#2-camera--controls)
-3.  [Lighting](#3-lighting)
-4.  [Objects & Geometry](#4-objects--geometry)
-5.  [Interaction & Raycasting](#5-interaction--raycasting)
-6.  [Animation Loop](#6-animation-loop)
-7.  [Responsiveness](#7-responsiveness)
+## 1. Project Overview
+
+This project is a web-based interactive 3D data visualization tool built to explore and present user study data collected from the **Keycube** — a cubic text-entry device with 80 touch-sensitive keys distributed across 5 faces. The application renders a 3D model of the Keycube using Three.js and allows users to interactively visualize preference and reachability data gathered from two formal user studies.
+
+The application is deployed as a static website via **GitHub Pages**, using **Jekyll** for data processing (CSV → JavaScript) and **Three.js** for real-time 3D rendering.
 
 ---
 
-### 1. Core Components
+## 2. Research Context
 
-These are the three essential building blocks of any Three.js application.
+### 2.1 Study 1 — Holding Positions (31 participants)
 
--   `THREE.Scene`: This is the root container for all 3D objects in the project. The blue cube, the orange keys, the lights, and the camera are all added to this scene.
-    ```javascript
-    const scene = new THREE.Scene();
-    ```
+The first study investigated how users naturally hold the Keycube. Participants were asked to choose their preferred holding position from several options. Key findings:
 
--   `THREE.WebGLRenderer`: This is the engine responsible for drawing the scene onto the screen. It takes the scene and camera information and renders a 2D image on an HTML `<canvas>` element. The `{ antialias: true }` option is used to smooth the edges of the objects, resulting in a cleaner look.
-    ```javascript
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-    ```
+- **31 participants** participated
+- **77.4% preferred the diagonal position** — holding the cube with both hands, forearms slightly bent, with the touchscreen facing downward
+- This result established the **canonical holding posture** used as the basis for Study 2
 
--   `THREE.Color`: Used to set the background color of the scene to black, providing a neutral, high-contrast backdrop for the colored objects.
-    ```javascript
-    scene.background = new THREE.Color('black');
-    ```
+### 2.2 Study 2 — Finger-to-Key Preferences & Reachability (22 participants)
 
-### 2. Camera & Controls
+The second study mapped which fingers users prefer to reach each of the 80 keys, and how easily each key can be reached, using the diagonal holding position identified in Study 1. Key details:
 
-This section defines how the user views and interacts with the scene.
+- **22 participants** (19 right-handed, 3 left-handed)
+- **Hand measurements** recorded: circumference (172–230 mm) and length (162–206 mm)
+- Each participant rated **preference** for each key on each face (scale 1–10)
+- Each participant rated **reachability** per finger per key (0 = unreachable, 1 = reachable with effort, 2 = easily reachable)
+- **10 fingers** analyzed: Left Thumb (LT), Left Index (LI), Left Middle (LM), Left Ring (LR), Left Little (LL), Right Thumb (RT), Right Index (RI), Right Middle (RM), Right Ring (RR), Right Little (RL)
 
--   `THREE.PerspectiveCamera`: This camera mimics how the human eye sees. Objects farther away appear smaller.
-    -   `25`: The field of view (fov). A smaller angle like 25 degrees creates a "zoomed-in" effect.
-    -   `window.innerWidth / window.innerHeight`: The aspect ratio, ensuring objects are not stretched or squashed.
-    -   `0.1` and `1000`: The near and far clipping planes. Objects closer than 0.1 or farther than 1000 units from the camera will not be rendered.
-    ```javascript
-    const camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(2, 2, 4); // Initial camera position
-    ```
+### 2.3 Keycube Face Layout
 
--   `OrbitControls`: An add-on that allows the user to "orbit" the camera around a target point (the center of the scene by default) using the mouse.
-    -   `controls.enableDamping = true`: This creates a smooth, inertial effect. When the user stops dragging, the camera gently decelerates instead of stopping abruptly. This requires `controls.update()` to be called in the animation loop.
-    ```javascript
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    ```
+| Face Color | Code | Position        |
+|-----------|------|-----------------|
+| Red       | R    | Top (x+)        |
+| Blue      | B    | External (x-)   |
+| Green     | G    | Internal (z+)   |
+| White     | W    | Internal (y-)   |
+| Yellow    | Y    | External (y+)   |
 
-### 3. Lighting
+Each face contains **16 keys** in a 4×4 grid (e.g., R1–R16, B1–B16, etc.), totaling **80 keys**.
 
-Lighting is crucial for making 3D objects visible and giving them depth. This project uses a combination of two lights.
+---
 
--   `THREE.AmbientLight`: Provides a soft, base level of light that illuminates all objects in the scene equally, from all directions. It prevents any part of the scene from being completely black.
-    ```javascript
-    const ambientLight = new THREE.AmbientLight('white', 0.6);
-    scene.add(ambientLight);
-    ```
+## 3. Architecture & Technical Implementation
 
--   `THREE.DirectionalLight`: Simulates a distant light source, like the sun. It casts light from a specific direction, creating highlights and shadows. This gives the cube and keys a more defined, 3D appearance.
-    ```javascript
-    const directionalLight = new THREE.DirectionalLight('white', 0.8);
-    directionalLight.position.set(5, 5, 5); // Light comes from this direction
-    scene.add(directionalLight);
-    ```
+### 3.1 Technology Stack
 
-### 4. Objects & Geometry
+| Component        | Technology           | Purpose                                      |
+|-----------------|---------------------|----------------------------------------------|
+| Static Site     | Jekyll + GitHub Pages | Hosting, Liquid templating, CSV data processing |
+| 3D Rendering    | Three.js (ES module) | WebGL-based interactive 3D keycube model      |
+| Data Format     | CSV (`_data/`)       | User study data storage                       |
+| Styling         | Custom CSS           | Responsive layout, controls, heatmap legend   |
+| Version Control | Git + GitHub         | Source management and deployment               |
 
-This section covers the creation of the visible objects in the scene.
+### 3.2 Project Structure
 
--   `THREE.BoxGeometry`: A class for defining a rectangular cuboid shape. It is used to create both the large central cube and the smaller keys.
-    ```javascript
-    const geometry = new THREE.BoxGeometry(1, 1, 1); // For the main cube
-    const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize); // For the keys
-    ```
+```
+├── index.markdown          # Landing page with auto-redirect
+├── dataviz.markdown        # Main visualization page (controls + 3D model)
+├── _includes/
+│   └── model-viewer.js     # Three.js 3D scene and rendering logic
+├── _data/
+│   ├── preferences.csv     # Study 2: participant preference data (22 rows × 80+ columns)
+│   └── reachability.csv    # Study 2: per-finger reachability data (22 rows × 800+ columns)
+├── _layouts/
+│   └── default.html        # Base HTML layout
+├── assets/
+│   └── css/main.css        # Homepage styles
+├── _config.yml             # Jekyll configuration
+└── REPORT.md               # This report
+```
 
--   `THREE.MeshStandardMaterial`: A realistic material that reacts to light. It's used for the cube and keys, allowing them to be properly lit by the `DirectionalLight`. The `.clone()` method is used on the key material to ensure each key can have its color changed independently.
-    ```javascript
-    const material = new THREE.MeshStandardMaterial({ color: 'royalblue' });
-    const keyMaterial = new THREE.MeshStandardMaterial({ color: 'orange' });
-    ```
+### 3.3 Data Pipeline
 
--   `THREE.Mesh`: The final object that combines a `Geometry` (the shape) with a `Material` (the appearance). The project creates one mesh for the central cube and many meshes for the keys inside a loop.
-    ```javascript
-    const cube = new THREE.Mesh(geometry, material);
-    const key = new THREE.Mesh(keyGeometry, keyMaterial.clone());
-    ```
+1. **CSV files** are placed in `_data/` and automatically parsed by Jekyll
+2. **Liquid templates** in `dataviz.markdown` iterate over CSV rows and generate JavaScript arrays at build time
+3. Preference data becomes `participantsData[]` — an array of 22 objects with per-face key arrays
+4. Reachability data goes through nested Liquid loops to compute:
+   - `reachabilityData[]` — total reachability per key (sum across all 10 fingers)
+   - `perFingerReachability{}` — individual finger reachability arrays
+5. **Aggregate computations** are performed in JavaScript: mean preference and total reachability across all participants
 
--   `THREE.Group`: A container used to group multiple objects together. In this project, the main cube and all the small keys are added to `keycubeGroup`. This allows us to treat the entire assembly as a single unit for positioning and for raycasting.
-    ```javascript
-    const keycubeGroup = new THREE.Group();
-    keycubeGroup.add(cube); // Add the main cube
-    // ...loop to add all keys...
-    scene.add(keycubeGroup); // Add the entire group to the scene
-    ```
+### 3.4 3D Model Implementation (`model-viewer.js`)
 
-### 5. Interaction & Raycasting
+The 3D scene is built with Three.js and consists of:
 
-This is how the application detects when the mouse is over an object.
+- **Scene:** Black background, perspective camera at position (2, 2, 4)
+- **Cube body:** RoundedBoxGeometry (1×1×1) with a tan material
+- **80 keys:** BoxGeometry (0.15³ each), positioned in 4×4 grids on 5 faces with correct axis offsets
+- **80 text labels:** Canvas-based sprites floating above each key, displaying the key ID (e.g., "R1", "B12", "G5"), always facing the camera for readability
+- **Lighting:** Ambient light (0.6) + directional light (adjustable intensity)
+- **Controls:** OrbitControls for rotation and zoom
 
--   `THREE.Raycaster`: This utility "shoots" a virtual ray from the camera's position through the mouse cursor's position into the 3D scene. It can then report which objects this ray intersects.
-    ```javascript
-    const raycaster = new THREE.Raycaster();
-    ```
+The `window.updateModel(data)` function accepts a data object and supports:
 
--   `THREE.Vector2`: A simple 2D vector used here to store the mouse's position in normalized device coordinates (from -1 to +1), which is the format the `Raycaster` requires.
-    ```javascript
-    const mouse = new THREE.Vector2();
-    ```
+| Parameter       | Effect                                                |
+|----------------|-------------------------------------------------------|
+| `handedness`   | Mirrors the cube (scale.x = -1 for left hand)         |
+| `reset`        | Restores all keys to original colors and scales        |
+| `color + colorData` | Preference visualization: brightens keys + adjusts height |
+| `heatmap`      | HSL heatmap: red (0) → yellow (0.5) → green (1)       |
+| `wireframe`    | Toggles wireframe rendering                            |
+| `backgroundColor` | Changes scene background color                      |
+| `resetView`    | Resets camera to initial position                      |
+| `lightingIntensity` | Adjusts directional light intensity              |
+| `circumference / length` | Scales the cube based on hand measurements  |
 
--   `raycaster.setFromCamera(mouse, camera)`: This function updates the raycaster, positioning the ray based on the current mouse coordinates and camera position.
+---
 
--   `raycaster.intersectObjects(...)`: This function performs the actual intersection test and returns an array of all objects that the ray hits, sorted by distance. This is used to determine which key is being hovered over. The logic is optimized to handle changing the hovered key's color and resetting the previously hovered one in a clean and efficient way.
-    ```javascript
-    // In the animate loop:
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(keycubeGroup.children);
-    const newHoveredKey = (intersects.length > 0 && intersects[0].object !== cube) ? intersects[0].object : null;
+## 4. Visualization Modes
 
-    if (hoveredKey !== newHoveredKey) {
-      if (hoveredKey) {
-        hoveredKey.material.color.set('orange'); // Reset old key
-      }
-      if (newHoveredKey) {
-        newHoveredKey.material.color.set('lightgray'); // Highlight new key
-      }
-      hoveredKey = newHoveredKey;
-    }
-    ```
+The application offers **three visualization modes**, selectable via buttons in the control panel:
 
-### 6. Animation Loop
+### 4.1 Preference Mode (Default)
 
-The `animate` function creates a loop that renders the scene repeatedly, creating the illusion of motion and interactivity.
+- Select a participant from a dropdown (22 participants available)
+- Click a face color button (Red, Blue, Green, White, Yellow) to visualize that participant's preference data
+- **Visual encoding:** Key brightness represents preference intensity (1–10 scale); key height is inversely proportional to preference (lower key = higher preference)
+- Participant hand measurements (circumference, length) are loaded automatically and scale the cube
 
--   `requestAnimationFrame(animate)`: This is a browser API that tells the browser to call the `animate` function again before the next repaint. It creates a smooth, efficient loop.
+### 4.2 Aggregate Mode
 
--   `controls.update()`: When damping is enabled on `OrbitControls`, this function must be called in the animation loop to apply the smooth deceleration effect to the camera's movement.
+- Displays the **mean preference** across all 22 participants
+- Uses a **heatmap** visualization (HSL color mapping): red = low preference → yellow → green = high preference
+- Key height also encodes the aggregated value
+- Can click individual faces to isolate them
 
--   `renderer.render(scene, camera)`: This is the final step in each frame, where the renderer draws the current state of the scene from the camera's perspective.
+### 4.3 Reachability Mode
 
-### 7. Responsiveness
+- Displays a **finger-to-key reachability heatmap**
+- Filter by specific finger using a dropdown (10 finger options + "All Fingers")
+- HSL color scale: **green = easily reachable**, **red = unreachable**
+- Data is the sum of reachability scores across all 22 participants per key
+- Supports per-finger analysis (e.g., show only Left Thumb or Right Index reachability)
 
-This code ensures that the 3D scene adapts correctly when the browser window is resized.
+---
 
--   `window.addEventListener('resize', ...)`: This sets up a listener that executes code whenever the window size changes.
--   `camera.aspect = ...`: Updates the camera's aspect ratio to match the new window dimensions, preventing object distortion.
--   `camera.updateProjectionMatrix()`: Applies the change in aspect ratio to the camera. This is a mandatory step after changing most camera properties.
--   `renderer.setSize(...)`: Resizes the renderer's canvas to fit the new window dimensions.
+## 5. User Interface Features
+
+### 5.1 Layout
+
+- **Split-panel design:** Control panel (350px, left) + 3D model viewer (flex-grow, right)
+- **Collapsible sections** with +/− indicators for organized control groups
+- **Responsive design:** Adapts to mobile (768px) and small screens (480px)
+
+### 5.2 Control Sections
+
+1. **Visualization Mode** — Mode switching (Preference / Aggregate / Reachability) + mode description + finger filter (reachability) + heatmap legend
+2. **Select Participant** — Dropdown with participant info (handedness, hand circumference)
+3. **Participant Data Summary** — Displays selected participant's measurements
+4. **Color Preferences Visualization** — Face color buttons (R/B/G/W/Y) + reset
+5. **Manual Controls** — Handedness toggle + hand measurement sliders
+6. **Display Options** — Wireframe toggle + background color picker
+7. **Study Info** — Statistics grid (31 participants, 22 participants, 77.4% diagonal, 80 keys) + study descriptions
+8. **Scene & View** — Reset view button + lighting intensity slider
+
+### 5.3 3D Interaction
+
+- **Orbit controls:** Click and drag to rotate, scroll to zoom
+- **Key labels:** Each of the 80 keys displays its ID (e.g., "R1") as a floating sprite that always faces the camera
+- **No hover interaction:** The model state changes only through the control panel (by design, to keep the visualization deterministic)
+
+---
+
+## 6. Data Files Description
+
+### 6.1 `_data/preferences.csv`
+
+| Column              | Description                        |
+|--------------------|------------------------------------|
+| Number             | Participant ID (1–22)              |
+| Handedness         | "right" or "left"                  |
+| CircumferenceRightHand | Hand circumference in mm       |
+| LengthRightHand    | Hand length in mm                  |
+| R1–R16             | Preference scores for Red face     |
+| B1–B16             | Preference scores for Blue face    |
+| G1–G16             | Preference scores for Green face   |
+| W1–W16             | Preference scores for White face   |
+| Y1–Y16             | Preference scores for Yellow face  |
+
+**22 rows, 84 columns.** Values represent preference intensity on a 1–10 scale.
+
+### 6.2 `_data/reachability.csv`
+
+| Column Pattern      | Description                                        |
+|--------------------|----------------------------------------------------|
+| Number             | Participant ID (1–22)                               |
+| {Finger}-{Face}{Key} | Reachability score (e.g., `LT-R1`, `RI-B12`)    |
+
+**22 rows, 800+ data columns.** Each column follows the pattern `{Finger}-{Face}{KeyNumber}` where:
+- Finger ∈ {LT, LI, LM, LR, LL, RT, RI, RM, RR, RL}
+- Face ∈ {R, B, G, W, Y}
+- Key ∈ {1, 2, ..., 16}
+
+Values: **0** = unreachable, **1** = reachable with effort, **2** = easily reachable.
+
+---
+
+## 7. Development History
+
+| Commit | Description |
+|--------|-------------|
+| `927220e` | Initial commit |
+| `1264728` | Phase 3 finished (initial Three.js integration) |
+| `26190a1` | Jekyll integration |
+| `5c698a3` | Full refactoring, data integration, visualization options |
+| `02b8653` | Responsive design optimization and visualization options |
+| `63de7fd` | Homepage ↔ Visualization page interaction setup |
+| `f912fc4` | Visualization page upgrade |
+| `a98dfd3` | Base URL fix for GitHub Pages |
+| `7782504` | Visualization page reset |
+| `b28c6df` | Data visualization improvement |
+| `4efbd29` | Homepage transition + title bar removal |
+| `96e0f5b` | Upgrade 1 — Layout restructuring, collapsible sections |
+| `328246b` | Upgrade 1.1 — Display options (wireframe, background) |
+| `50e953c` | Upgrade 2 — Scene controls, enhanced styling |
+| `ba3faa9` | Upgrade 3 — Study data integration (3 visualization modes, reachability heatmap, aggregate computation, study info panel) |
+| `b33b7e6` | Removed raycaster hover interaction |
+| `8d142e7` | Added floating text labels on each key |
+
+---
+
+## 8. How to Run Locally
+
+```bash
+# Prerequisites: Ruby, Bundler, Jekyll
+bundle install
+bundle exec jekyll serve
+# Open http://localhost:4000 in a browser
+```
+
+The site is also deployed automatically via GitHub Pages at the repository URL.
+
+---
+
+## 9. Summary
+
+This project transforms raw user study data from two Keycube experiments into an interactive 3D visualization tool. It allows researchers and evaluators to:
+
+1. **Explore individual participant data** — selecting any of the 22 participants and viewing their finger-to-key preferences per face
+2. **Analyze aggregate trends** — viewing mean preference heatmaps across all participants to identify globally preferred keys
+3. **Investigate finger reachability** — filtering by specific fingers to understand which keys are most/least accessible, critical for ergonomic keyboard layout design
+4. **Manipulate the 3D model** — rotating, zooming, adjusting lighting, toggling wireframe, and reading key labels from any angle
+
+The tool bridges the gap between tabular study data and spatial understanding, making it possible to visually correlate key positions on the cube's faces with user preference and reachability metrics.

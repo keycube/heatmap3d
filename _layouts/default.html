@@ -12,6 +12,7 @@
 </head>
 <body>
   {{ content }}
+  {% if page.title == "Data Visualization" %}
   <script type="importmap">
     {
       "imports": {
@@ -21,5 +22,6 @@
     }
   </script>
   {% include model-viewer.js %}
+  {% endif %}
 </body>
 </html>

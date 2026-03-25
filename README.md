@@ -3,7 +3,7 @@
 **Project:** 3D Interactive Visualization of Keycube User Study Data  
 **Repository:** [keycube/heatmap3d](https://github.com/keycube/heatmap3d)  
 **Technology Stack:** Jekyll (Ruby) · Three.js (WebGL) · GitHub Pages  
-**Date:** March 2026
+**Date of last update:** March 2026
 
 ---
 
@@ -64,32 +64,43 @@ Each face contains **16 keys** in a 4×4 grid (e.g., R1–R16, B1–B16, etc.), 
 ### 3.2 Project Structure
 
 ```
-├── index.markdown          # Landing page with auto-redirect
-├── dataviz.markdown        # Main visualization page (controls + 3D model)
-├── _includes/
-│   └── model-viewer.js     # Three.js 3D scene and rendering logic
-├── _data/
-│   ├── preferences.csv     # Study 2: participant preference data (22 rows × 80+ columns)
-│   └── reachability.csv    # Study 2: per-finger reachability data (22 rows × 800+ columns)
+├── index.markdown              # Landing page (front matter + HTML content only)
+├── dataviz.html                # Main visualization page (front matter + HTML controls only)
 ├── _layouts/
-│   └── default.html        # Base HTML layout
+│   ├── default.html            # Base HTML layout (minimal)
+│   ├── home.html               # Layout for the landing page (loads main.css + home.js)
+│   └── dataviz.html            # Layout for the visualization page (loads Three.js, CSS, JS, includes)
+├── _includes/
+│   ├── model-viewer.html       # Three.js 3D scene and rendering logic (ES module)
+│   └── dataviz-data.html       # Jekyll/Liquid template that generates JS data from CSV
+├── _data/
+│   ├── preferences.csv         # Study 2: participant preference data (22 rows × 80+ columns)
+│   └── reachability.csv        # Study 2: per-finger reachability data (22 rows × 800+ columns)
 ├── assets/
-│   └── css/main.css        # Homepage styles
-├── _config.yml             # Jekyll configuration
-└── REPORT.md               # This report
+│   ├── css/
+│   │   ├── default.css         # Base styles (box-sizing, font, body reset)
+│   │   ├── main.css            # Homepage styles (centered title, fade-out animation)
+│   │   └── dataviz.css         # Visualization page styles (controls, buttons, heatmap, responsive)
+│   └── js/
+│       ├── home.js             # Homepage auto-redirect logic
+│       └── dataviz.js          # Visualization UI logic (mode switching, controls, events)
+├── _config.yml                 # Jekyll configuration
+└── README.md                   # This report
 ```
+
+**Separation of concerns:** Markdown/HTML pages contain only front matter and structural HTML content. All CSS is in `assets/css/`, all JavaScript logic is in `assets/js/`, and Jekyll/Liquid data generation is isolated in `_includes/`. Layouts handle the assembly of resources.
 
 ### 3.3 Data Pipeline
 
 1. **CSV files** are placed in `_data/` and automatically parsed by Jekyll
-2. **Liquid templates** in `dataviz.markdown` iterate over CSV rows and generate JavaScript arrays at build time
-3. Preference data becomes `participantsData[]` — an array of 22 objects with per-face key arrays
+2. **Liquid templates** in `_includes/dataviz-data.html` iterate over CSV rows and generate JavaScript arrays at build time
+3. Preference data becomes `window.participantsData[]` — an array of 22 objects with per-face key arrays
 4. Reachability data goes through nested Liquid loops to compute:
-   - `reachabilityData[]` — total reachability per key (sum across all 10 fingers)
-   - `perFingerReachability{}` — individual finger reachability arrays
-5. **Aggregate computations** are performed in JavaScript: mean preference and total reachability across all participants
+   - `window.reachabilityData[]` — total reachability per key (sum across all 10 fingers)
+   - `window.perFingerReachability{}` — individual finger reachability arrays
+5. **Aggregate computations** are performed in `assets/js/dataviz.js`: mean preference and total reachability across all participants
 
-### 3.4 3D Model Implementation (`model-viewer.js`)
+### 3.4 3D Model Implementation (`_includes/model-viewer.html`)
 
 The 3D scene is built with Three.js and consists of:
 
@@ -226,6 +237,7 @@ Values: **0** = unreachable, **1** = reachable with effort, **2** = easily reach
 | `ba3faa9` | Upgrade 3 — Study data integration (3 visualization modes, reachability heatmap, aggregate computation, study info panel) |
 | `b33b7e6` | Removed raycaster hover interaction |
 | `8d142e7` | Added floating text labels on each key |
+| _latest_ | Refactor: extract inline CSS/JS from markdown files into dedicated files |
 
 ---
 

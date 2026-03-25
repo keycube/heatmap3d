@@ -1,0 +1,48 @@
+---
+---
+<script>
+  // Données CSV intégrées (généré par Jekyll)
+  window.participantsData = [
+    {% for row in site.data.preferences %}
+    {
+      number: {{ row.Number }},
+      handedness: "{{ row.Handedness }}",
+      circumference: {{ row.CircumferenceRightHand }},
+      length: {{ row.LengthRightHand }},
+      R: [{{ row.R1 }},{{ row.R2 }},{{ row.R3 }},{{ row.R4 }},{{ row.R5 }},{{ row.R6 }},{{ row.R7 }},{{ row.R8 }},{{ row.R9 }},{{ row.R10 }},{{ row.R11 }},{{ row.R12 }},{{ row.R13 }},{{ row.R14 }},{{ row.R15 }},{{ row.R16 }}],
+      B: [{{ row.B1 }},{{ row.B2 }},{{ row.B3 }},{{ row.B4 }},{{ row.B5 }},{{ row.B6 }},{{ row.B7 }},{{ row.B8 }},{{ row.B9 }},{{ row.B10 }},{{ row.B11 }},{{ row.B12 }},{{ row.B13 }},{{ row.B14 }},{{ row.B15 }},{{ row.B16 }}],
+      G: [{{ row.G1 }},{{ row.G2 }},{{ row.G3 }},{{ row.G4 }},{{ row.G5 }},{{ row.G6 }},{{ row.G7 }},{{ row.G8 }},{{ row.G9 }},{{ row.G10 }},{{ row.G11 }},{{ row.G12 }},{{ row.G13 }},{{ row.G14 }},{{ row.G15 }},{{ row.G16 }}],
+      W: [{{ row.W1 }},{{ row.W2 }},{{ row.W3 }},{{ row.W4 }},{{ row.W5 }},{{ row.W6 }},{{ row.W7 }},{{ row.W8 }},{{ row.W9 }},{{ row.W10 }},{{ row.W11 }},{{ row.W12 }},{{ row.W13 }},{{ row.W14 }},{{ row.W15 }},{{ row.W16 }}],
+      Y: [{{ row.Y1 }},{{ row.Y2 }},{{ row.Y3 }},{{ row.Y4 }},{{ row.Y5 }},{{ row.Y6 }},{{ row.Y7 }},{{ row.Y8 }},{{ row.Y9 }},{{ row.Y10 }},{{ row.Y11 }},{{ row.Y12 }},{{ row.Y13 }},{{ row.Y14 }},{{ row.Y15 }},{{ row.Y16 }}]
+    }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+
+  // Reachability data (total per key, summed across all fingers per participant)
+  {% assign fingers = "LT,LI,LM,LR,LL,RT,RI,RM,RR,RL" | split: "," %}
+  {% assign faceNames = "R,B,G,W,Y" | split: "," %}
+  window.reachabilityData = [
+    {% for row in site.data.reachability %}
+    {
+      number: {{ row.Number }},
+      {% for face in faceNames %}
+      {{ face }}: [{% for k in (1..16) %}{% assign total = 0 %}{% for f in fingers %}{% capture col %}{{ f }}-{{ face }}{{ k }}{% endcapture %}{% assign val = row[col] | plus: 0 %}{% assign total = total | plus: val %}{% endfor %}{{ total }}{% unless forloop.last %},{% endunless %}{% endfor %}]{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+
+  // Per-finger reachability data
+  window.perFingerReachability = {};
+  {% for f in fingers %}
+  window.perFingerReachability['{{ f }}'] = [
+    {% for row in site.data.reachability %}
+    {
+      {% for face in faceNames %}
+      {{ face }}: [{% for k in (1..16) %}{% capture col %}{{ f }}-{{ face }}{{ k }}{% endcapture %}{{ row[col] | plus: 0 }}{% unless forloop.last %},{% endunless %}{% endfor %}]{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+  {% endfor %}
+</script>

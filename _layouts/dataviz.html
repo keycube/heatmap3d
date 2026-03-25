@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: 'fr' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title | default: "Keycube Jekyll" }}</title>
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/dataviz.css">
+</head>
+<body>
+  {{ content }}
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  {% include model-viewer.html %}
+  {% include dataviz-data.html %}
+  <script src="{{ site.baseurl }}/assets/js/dataviz.js"></script>
+</body>
+</html>

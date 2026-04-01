@@ -1,0 +1,292 @@
+/* Landing page CSS for Keycube Heatmap 3D
+   ─────────────────────────────────────────
+   Design approach: Full-screen immersive 3D scene with overlay UI.
+   Inspired by modern data visualization landing pages.
+   
+   CSS architecture references:
+   - CSS Grid overlay technique: https://css-tricks.com/positioning-overlay-content-with-css-grid/
+   - Glassmorphism effect: https://css.glass/
+   - Modern button design: https://moderncss.dev/css-button-styling-guide/
+*/
+
+/* ─── Reset & Base ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
+}
+
+/* ─── 3D Canvas Background ─── */
+#landing-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* ─── Overlay Container ─── */
+/* Uses CSS Grid to center content over the 3D scene */
+.landing-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none; /* Allow mouse events to pass through to 3D scene */
+}
+
+/* ─── Title Section ─── */
+.landing-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  pointer-events: auto;
+}
+
+.landing-title h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #1a1a2e;
+  text-shadow: 0 0 30px rgba(74, 158, 255, 0.2);
+  margin-bottom: 0.5rem;
+}
+
+.landing-title .subtitle {
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+/* ─── Navigation Buttons Container ─── */
+/* Buttons are centered and overlaid on the keycube model */
+.nav-buttons {
+  display: flex;
+  gap: 1.5rem;
+  pointer-events: auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+/* ─── Navigation Button ─── 
+   Glassmorphism effect for modern translucent look.
+   Ref: https://css.glass/ 
+   Each button corresponds to a visualization mode. */
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  height: 120px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  /* Glassmorphism backdrop blur - https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #1a1a2e;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.nav-btn:hover::before {
+  left: 100%;
+}
+
+.nav-btn:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 20px rgba(74, 158, 255, 0.1);
+}
+
+/* ─── Button Icon ─── */
+.nav-btn .btn-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.nav-btn:hover .btn-icon {
+  transform: scale(1.15);
+}
+
+/* ─── Button Label ─── */
+.nav-btn .btn-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ─── Button Description ─── */
+.nav-btn .btn-desc {
+  font-size: 0.65rem;
+  color: rgba(0, 0, 0, 0.45);
+  margin-top: 0.25rem;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Individual Button Accent Colors ─── */
+/* Each mode has its own accent to visually distinguish them */
+.nav-btn.preference-btn {
+  border-color: rgba(255, 107, 107, 0.3);
+}
+.nav-btn.preference-btn:hover {
+  border-color: rgba(255, 107, 107, 0.6);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(255, 107, 107, 0.15);
+}
+.nav-btn.preference-btn .btn-icon {
+  color: #ff6b6b;
+}
+
+.nav-btn.aggregate-btn {
+  border-color: rgba(77, 171, 247, 0.3);
+}
+.nav-btn.aggregate-btn:hover {
+  border-color: rgba(77, 171, 247, 0.6);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(77, 171, 247, 0.15);
+}
+.nav-btn.aggregate-btn .btn-icon {
+  color: #4dabf7;
+}
+
+.nav-btn.reachability-btn {
+  border-color: rgba(81, 207, 102, 0.3);
+}
+.nav-btn.reachability-btn:hover {
+  border-color: rgba(81, 207, 102, 0.6);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(81, 207, 102, 0.15);
+}
+.nav-btn.reachability-btn .btn-icon {
+  color: #51cf66;
+}
+
+/* ─── Footer Credit ─── */
+.landing-footer {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.landing-footer p {
+  font-size: 0.7rem;
+  color: rgba(0, 0, 0, 0.35);
+  letter-spacing: 0.5px;
+}
+
+.landing-footer a {
+  color: rgba(74, 158, 255, 0.7);
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.landing-footer a:hover {
+  color: rgba(74, 158, 255, 1);
+}
+
+/* ─── Responsive Design ─── */
+/* Mobile-first adjustments
+   Ref: https://developer.mozilla.org/en-US/docs/Learn/CSS/CSS_layout/Responsive_Design */
+
+@media (max-width: 768px) {
+  .landing-title h1 {
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+  }
+
+  .landing-title .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .nav-buttons {
+    gap: 1rem;
+  }
+
+  .nav-btn {
+    width: 140px;
+    height: 100px;
+  }
+
+  .nav-btn .btn-icon {
+    font-size: 1.6rem;
+  }
+
+  .nav-btn .btn-label {
+    font-size: 0.8rem;
+  }
+
+  .nav-btn .btn-desc {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-title h1 {
+    font-size: 1.4rem;
+  }
+
+  .nav-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .nav-btn {
+    width: 200px;
+    height: 80px;
+    flex-direction: row;
+    gap: 0.8rem;
+    padding: 0 1.2rem;
+  }
+
+  .nav-btn .btn-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0;
+  }
+
+  .nav-btn .btn-label {
+    font-size: 0.75rem;
+  }
+}

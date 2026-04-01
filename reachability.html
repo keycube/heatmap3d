@@ -1,0 +1,91 @@
+---
+layout: dataviz
+title: Reachability – Keycube Heatmap 3D
+default_mode: reachability
+permalink: /reachability
+---
+
+<a href="{{ site.baseurl }}/" class="nav-link">← Home</a>
+
+<div class="main-container">
+  <div id="controls">
+    <div class="controls-section active">
+      <h3>Reachability Mode</h3>
+      <div class="section-content" style="display: block;">
+        <div id="mode-description">Heatmap of finger-to-key reachability scores. Green = easily reachable, Red = unreachable. Filter by specific finger below.</div>
+        <div id="reachability-options">
+          <label for="finger-select"><strong>Finger filter:</strong></label>
+          <select class="finger-select" id="finger-select">
+            <option value="total">All Fingers (Total)</option>
+            <optgroup label="Left Hand">
+              <option value="LT">Left Thumb</option>
+              <option value="LI">Left Index</option>
+              <option value="LM">Left Middle</option>
+              <option value="LR">Left Ring</option>
+              <option value="LL">Left Little</option>
+            </optgroup>
+            <optgroup label="Right Hand">
+              <option value="RT">Right Thumb</option>
+              <option value="RI">Right Index</option>
+              <option value="RM">Right Middle</option>
+              <option value="RR">Right Ring</option>
+              <option value="RL">Right Little</option>
+            </optgroup>
+          </select>
+          <div class="heatmap-legend">
+            <span>Low</span>
+            <div class="heatmap-gradient"></div>
+            <span>High</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <h3>Display Options</h3>
+      <div class="section-content">
+        <div class="display-option">
+          <label for="wireframe-toggle">Wireframe</label>
+          <label class="switch">
+            <input type="checkbox" id="wireframe-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="display-option">
+          <label for="bg-color-picker">Background</label>
+          <input type="color" id="bg-color-picker" value="#000000">
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <h3>Study Info</h3>
+      <div class="section-content">
+        <div class="study-info">
+          <div class="study-stat-grid">
+            <div class="study-stat-item"><strong>31</strong>Participants (Study 1)</div>
+            <div class="study-stat-item"><strong>22</strong>Participants (Study 2)</div>
+            <div class="study-stat-item"><strong>77.4%</strong>Preferred Diagonal</div>
+            <div class="study-stat-item"><strong>80</strong>Keys (5 faces)</div>
+          </div>
+          <p><strong>Study 2:</strong> Mapped finger-to-key reachability in the diagonal holding position. Each key's score represents how many participants could reach it with a given finger.</p>
+          <p><strong>Color scale:</strong> Red (low reachability) → Yellow → Green (high reachability).</p>
+          <p><strong>Face orientation:</strong> Red (top), Blue &amp; Yellow (external), White &amp; Green (internal, facing body).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <h3>Scene &amp; View</h3>
+      <div class="section-content">
+        <button class="scene-btn" id="reset-view-btn" data-tooltip="Reset camera to default position">Reset View</button>
+        <div class="display-option">
+          <label for="light-intensity">Lighting</label>
+          <input type="range" id="light-intensity" min="0" max="200" value="80">
+          <span id="light-intensity-value">80</span>%
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="model-container"></div>
+</div>

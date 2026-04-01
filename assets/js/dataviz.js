@@ -3,8 +3,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var reachabilityData = window.reachabilityData;
   var perFingerReachability = window.perFingerReachability;
 
+  // Read the default mode from the page's meta tag
+  // This allows each page (preference.html, aggregate.html, reachability.html) to specify its mode
+  var defaultModeMeta = document.querySelector('meta[name="default-mode"]');
+  var currentMode = defaultModeMeta ? defaultModeMeta.getAttribute('content') : 'preference';
+
   var currentParticipant = null;
-  var currentMode = 'preference'; // 'preference', 'aggregate', 'reachability'
 
   // Compute aggregate mean preference across all participants
   var aggregatePreference = { R: [], B: [], G: [], W: [], Y: [] };
@@ -146,17 +150,24 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function updateUIControls(participant) {
-    document.getElementById('circumference').value = participant.circumference;
-    document.getElementById('circumference-value').textContent = participant.circumference;
-    document.getElementById('length').value = participant.length;
-    document.getElementById('length-value').textContent = participant.length;
+    var circumferenceEl = document.getElementById('circumference');
+    var circumferenceValueEl = document.getElementById('circumference-value');
+    var lengthEl = document.getElementById('length');
+    var lengthValueEl = document.getElementById('length-value');
+
+    if (circumferenceEl) circumferenceEl.value = participant.circumference;
+    if (circumferenceValueEl) circumferenceValueEl.textContent = participant.circumference;
+    if (lengthEl) lengthEl.value = participant.length;
+    if (lengthValueEl) lengthValueEl.textContent = participant.length;
 
     // Update summary
     var summaryPanel = document.getElementById('participant-summary');
-    summaryPanel.style.display = 'block';
-    document.getElementById('summary-handedness').textContent = participant.handedness;
-    document.getElementById('summary-circumference').textContent = participant.circumference;
-    document.getElementById('summary-length').textContent = participant.length;
+    if (summaryPanel) {
+      summaryPanel.style.display = 'block';
+      document.getElementById('summary-handedness').textContent = participant.handedness;
+      document.getElementById('summary-circumference').textContent = participant.circumference;
+      document.getElementById('summary-length').textContent = participant.length;
+    }
   }
 
   // Handedness buttons
@@ -286,4 +297,14 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // ─── Auto-apply default mode on page load ───
+  // Each page sets its own default_mode via a <meta> tag.
+  // On load, we automatically activate the correct visualization.
+  if (currentMode === 'aggregate') {
+    applyAggregateView();
+  } else if (currentMode === 'reachability') {
+    applyReachabilityView();
+  }
+  // 'preference' mode waits for participant selection, no auto-apply needed.
 });

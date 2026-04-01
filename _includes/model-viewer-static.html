@@ -1,0 +1,142 @@
+<!-- Static wireframe Keycube viewer for the landing page.
+     Architecture inspired by the official Keycube three-viewer.html:
+     https://github.com/keycube/keycube.github.io/blob/main/_includes/three-viewer.html
+     
+     3D rendering with Three.js (https://threejs.org/)
+     - RoundedBoxGeometry: https://threejs.org/docs/#examples/en/geometries/RoundedBoxGeometry
+     - OrbitControls: https://threejs.org/docs/#examples/en/controls/OrbitControls
+     - EdgesGeometry + LineSegments for wireframe: https://threejs.org/docs/#api/en/geometries/EdgesGeometry
+       Preferred over material.wireframe to get clean, cube-edge-only lines.
+       Ref: https://discourse.threejs.org/t/wireframe-with-only-outer-edges/5default -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+// ─── Scene Setup ───
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#ffffff');
+
+// ─── Camera ───
+// Positioned to show the cube at a pleasant 3/4 angle
+const camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(2.5, 2, 4.5);
+
+// ─── Renderer ───
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.getElementById('landing-canvas').appendChild(renderer.domElement);
+
+// ─── Controls ───
+// OrbitControls for interactive rotation, with damping for smooth feel
+// Ref: https://threejs.org/docs/#examples/en/controls/OrbitControls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.enableZoom = false;      // Disable zoom to keep the composition stable
+controls.enablePan = false;       // Disable pan to keep the cube centered
+controls.autoRotate = true;       // Gentle auto-rotation for visual appeal
+controls.autoRotateSpeed = 0.8;   // Slow speed for elegance
+
+// ─── Lighting ───
+// Subtle lighting to give depth to the wireframe
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+directionalLight.position.set(5, 5, 5);
+scene.add(ambientLight, directionalLight);
+
+// ─── Keycube Group ───
+const keycubeGroup = new THREE.Group();
+
+// ─── Main Cube Body ───
+// Using RoundedBoxGeometry to match the dataviz model-viewer.html style
+const cubeGeometry = new RoundedBoxGeometry(1, 1, 1, 4, 0.1);
+
+// Wireframe via EdgesGeometry for clean edges (not triangulated wireframe)
+// Ref: https://threejs.org/docs/#api/en/geometries/EdgesGeometry
+const edgesMaterial = new THREE.LineBasicMaterial({ 
+  color: 0x999999, 
+  transparent: true, 
+  opacity: 0.4 
+});
+const edges = new THREE.EdgesGeometry(cubeGeometry);
+const cubeWireframe = new THREE.LineSegments(edges, edgesMaterial);
+keycubeGroup.add(cubeWireframe);
+
+// Also add a very subtle solid cube for depth perception
+const cubeSolidMaterial = new THREE.MeshStandardMaterial({ 
+  color: 0xf0f0f0, 
+  transparent: true, 
+  opacity: 0.15,
+  wireframe: false
+});
+const cubeSolid = new THREE.Mesh(cubeGeometry, cubeSolidMaterial);
+keycubeGroup.add(cubeSolid);
+
+// ─── Key Configuration ───
+// Identical layout to model-viewer.html for consistency
+const keySize = 0.15;
+const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize);
+const spacing = 0.20;
+const offset = 0.5;
+
+// Face definitions matching the dataviz keycube model
+const faces = [
+  { axis: 'y', sign: 1,  prefix: 'Y', color: '#ffd43b' },  // Yellow - top
+  { axis: 'y', sign: -1, prefix: 'W', color: '#f8f9fa' },  // White - bottom
+  { axis: 'x', sign: 1,  prefix: 'R', color: '#ff6b6b' },  // Red - right
+  { axis: 'x', sign: -1, prefix: 'B', color: '#4dabf7' },  // Blue - left
+  { axis: 'z', sign: 1,  prefix: 'G', color: '#51cf66' }   // Green - front
+];
+
+// Create wireframe keys on each face
+faces.forEach(({ axis, sign, prefix, color }) => {
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      // Wireframe key using EdgesGeometry for clean look
+      const keyEdges = new THREE.EdgesGeometry(keyGeometry);
+      const keyMaterial = new THREE.LineBasicMaterial({ 
+        color: color, 
+        transparent: true, 
+        opacity: 0.6
+      });
+      const key = new THREE.LineSegments(keyEdges, keyMaterial);
+      
+      const keyIndex = i * 4 + j + 1;
+      key.userData = { id: `${prefix}${keyIndex}`, face: prefix, index: keyIndex };
+
+      const u = (i - 1.5) * spacing;
+      const v = (j - 1.5) * spacing;
+
+      if (axis === 'y') {
+        key.position.set(u, offset * sign, v);
+      } else if (axis === 'x') {
+        key.position.set(offset * sign, u, v);
+      } else {
+        key.position.set(u, v, offset * sign);
+      }
+
+      keycubeGroup.add(key);
+    }
+  }
+});
+
+scene.add(keycubeGroup);
+
+// ─── Animation Loop ───
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+// ─── Responsive Resize ───
+// Ref: https://threejs.org/manual/#en/responsive
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>

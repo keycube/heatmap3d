@@ -3,15 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="baseurl" content="{{ site.baseurl }}">
-  <meta name="default-mode" content="{{ page.default_mode | default: 'preference' }}">
   <title>{{ page.title | default: "Keycube Heatmap 3D" }}</title>
-  <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/dataviz.css">
+  <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/landing.css">
 </head>
 <body>
   {{ content }}
   <!-- Three.js import map
-       Source: https://threejs.org/docs/#manual/en/introduction/Installation -->
+       Source: https://threejs.org/docs/#manual/en/introduction/Installation
+       Using unpkg CDN as recommended in official Three.js documentation -->
   <script type="importmap">
     {
       "imports": {
@@ -20,8 +19,6 @@
       }
     }
   </script>
-  {% include model-viewer.html %}
-  {% include dataviz-data.html %}
-  <script src="{{ site.baseurl }}/assets/js/dataviz.js"></script>
+  {% include model-viewer-static.html %}
 </body>
 </html>

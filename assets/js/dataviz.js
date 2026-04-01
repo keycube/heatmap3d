@@ -4,13 +4,13 @@ document.addEventListener('DOMContentLoaded', function () {
   var perFingerReachability = window.perFingerReachability;
 
   // Read the default mode from the page's meta tag
-  // This allows each page (preference.html, aggregate.html, reachability.html) to specify its mode
   var defaultModeMeta = document.querySelector('meta[name="default-mode"]');
   var currentMode = defaultModeMeta ? defaultModeMeta.getAttribute('content') : 'preference';
 
-  var currentParticipant = null;
+  var currentParticipant = null;  // null = no selection, 'aggregate' = mean, or participant object
+  var currentFace = null;         // null = all faces, or 'R','B','G','W','Y'
 
-  // Compute aggregate mean preference across all participants
+  // ─── Compute aggregate mean preference (1-10 scale) ───
   var aggregatePreference = { R: [], B: [], G: [], W: [], Y: [] };
   ['R','B','G','W','Y'].forEach(function (face) {
     for (var i = 0; i < 16; i++) {
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Compute aggregate reachability (total across all participants, all fingers)
+  // ─── Compute aggregate reachability (total across all participants × all fingers) ───
   var aggregateReachability = { R: [], B: [], G: [], W: [], Y: [] };
   ['R','B','G','W','Y'].forEach(function (face) {
     for (var i = 0; i < 16; i++) {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Compute per-finger aggregate reachability
+  // ─── Per-finger aggregate reachability ───
   function getFingerReachability(finger) {
     var result = { R: [], B: [], G: [], W: [], Y: [] };
     var fingerData = perFingerReachability[finger];
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return result;
   }
 
-  // Find min/max across all faces of a dataset
+  // ─── Range utility ───
   function getRange(data) {
     var min = Infinity, max = -Infinity;
     ['R','B','G','W','Y'].forEach(function (face) {
@@ -57,56 +57,141 @@ document.addEventListener('DOMContentLoaded', function () {
     return { min: min, max: max };
   }
 
-  // Mode descriptions
-  var modeDescriptions = {
-    preference: 'Select a participant then click a face color to view their finger-to-key preferences (lower key = higher preference).',
-    aggregate: 'Shows the mean preference values averaged across all 22 participants. Click a face to highlight it, or view all faces at once.',
-    reachability: 'Heatmap of finger-to-key reachability scores. Green = easily reachable, Red = unreachable. Filter by specific finger below.'
-  };
+  // ═══════════════════════════════════════════════════════
+  //  PREFERENCE MODE — unified individual + aggregate
+  // ═══════════════════════════════════════════════════════
 
-  // Mode switching
-  var modeButtons = document.querySelectorAll('.mode-btn');
-  var modeDescription = document.getElementById('mode-description');
-  var reachabilityOptions = document.getElementById('reachability-options');
+  function getPreferenceData() {
+    // Returns the preference dataset for the current selection
+    if (currentParticipant === 'aggregate') return aggregatePreference;
+    if (currentParticipant && typeof currentParticipant === 'object') return currentParticipant;
+    return null;
+  }
 
-  modeButtons.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      modeButtons.forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      currentMode = btn.getAttribute('data-mode');
-      modeDescription.textContent = modeDescriptions[currentMode];
-      reachabilityOptions.style.display = currentMode === 'reachability' ? 'block' : 'none';
+  function applyPreferenceView() {
+    if (!window.updateModel) return;
+    var data = getPreferenceData();
+    if (!data) {
+      // No participant selected — reset to original colors
+      window.updateModel({ reset: true });
+      return;
+    }
 
-      // Reset model when switching modes
-      if (window.updateModel) window.updateModel({ reset: true });
+    if (currentFace) {
+      // Show single face heatmap, dim the others
+      var faceData = data[currentFace];
+      if (!faceData) return;
+      // Build a single-face heatmap object
+      var singleFace = {};
+      singleFace[currentFace] = faceData;
+      window.updateModel({ heatmapSingleFace: singleFace, heatmapMin: 1, heatmapMax: 10, heatmapInvert: true });
+    } else {
+      // Show all faces as heatmap
+      // For individual participants, data has R/B/G/W/Y arrays
+      var heatmap = currentParticipant === 'aggregate' ? aggregatePreference : {
+        R: data.R, B: data.B, G: data.G, W: data.W, Y: data.Y
+      };
+      window.updateModel({ heatmap: heatmap, heatmapMin: 1, heatmapMax: 10, heatmapInvert: true });
+    }
+  }
+
+  // Update the selection badge display
+  function updateSelectionBadge(icon, text) {
+    var selectionIcon = document.getElementById('selection-icon');
+    var selectionText = document.getElementById('selection-text');
+    if (selectionIcon) selectionIcon.textContent = icon;
+    if (selectionText) selectionText.textContent = text;
+  }
+
+  // ─── Participant selector (includes "Aggregate" option) ───
+  var participantSelect = document.getElementById('participant-select');
+  if (participantSelect) {
+    participantSelect.addEventListener('change', function (e) {
+      var val = e.target.value;
+      currentFace = null; // reset face filter on participant change
       colorButtons.forEach(function (b) { b.classList.remove('active'); });
 
-      // Auto-apply for aggregate and reachability
-      if (currentMode === 'aggregate') {
-        applyAggregateView();
-      } else if (currentMode === 'reachability') {
-        applyReachabilityView();
+      var summaryPanel = document.getElementById('participant-summary');
+
+      if (val === 'aggregate') {
+        currentParticipant = 'aggregate';
+        if (summaryPanel) summaryPanel.style.display = 'none';
+        updateSelectionBadge('📊', 'Aggregate (Mean of 22 participants)');
+        // Reset cube scale for aggregate
+        if (window.updateModel) window.updateModel({ reset: true });
+        applyPreferenceView();
+      } else if (val !== '') {
+        currentParticipant = participantsData[parseInt(val)];
+        // Apply hand data to cube
+        if (window.updateModel) {
+          window.updateModel({
+            reset: true
+          });
+          window.updateModel({
+            handedness: currentParticipant.handedness,
+            circumference: currentParticipant.circumference,
+            length: currentParticipant.length
+          });
+        }
+        // Update summary panel
+        if (summaryPanel) {
+          summaryPanel.style.display = 'block';
+          var sh = document.getElementById('summary-handedness');
+          var sc = document.getElementById('summary-circumference');
+          var sl = document.getElementById('summary-length');
+          if (sh) sh.textContent = currentParticipant.handedness;
+          if (sc) sc.textContent = currentParticipant.circumference;
+          if (sl) sl.textContent = currentParticipant.length;
+        }
+        updateSelectionBadge('👤', 'Participant ' + currentParticipant.number +
+          ' (' + currentParticipant.handedness + ')');
+        applyPreferenceView();
+      } else {
+        currentParticipant = null;
+        if (summaryPanel) summaryPanel.style.display = 'none';
+        updateSelectionBadge('🎯', 'No participant selected');
+        if (window.updateModel) window.updateModel({ reset: true });
+      }
+    });
+  }
+
+  // ─── Face color buttons (work for both individual and aggregate) ───
+  var colorButtons = document.querySelectorAll('.color-btn');
+  colorButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      if (currentMode === 'preference') {
+        if (!currentParticipant) return; // no data to show
+        colorButtons.forEach(function (b) { b.classList.remove('active'); });
+        button.classList.add('active');
+        currentFace = button.getAttribute('data-color');
+        applyPreferenceView();
       }
     });
   });
 
-  // Apply aggregate heatmap
-  function applyAggregateView(face) {
-    if (!window.updateModel) return;
-    if (face) {
-      // Show single face with aggregate data
-      window.updateModel({ color: face, colorData: aggregatePreference[face] });
-    } else {
-      // Show all faces as heatmap
-      var range = getRange(aggregatePreference);
-      window.updateModel({ heatmap: aggregatePreference, heatmapMin: range.min, heatmapMax: range.max });
-    }
+  // ─── Reset / Show All button ───
+  var resetBtn = document.querySelector('.reset-btn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      colorButtons.forEach(function (b) { b.classList.remove('active'); });
+      currentFace = null;
+      if (currentMode === 'preference') {
+        applyPreferenceView();
+      } else if (currentMode === 'reachability') {
+        applyReachabilityView();
+      }
+    });
   }
 
-  // Apply reachability heatmap
+  // ═══════════════════════════════════════════════════════
+  //  REACHABILITY MODE
+  // ═══════════════════════════════════════════════════════
+
   function applyReachabilityView() {
     if (!window.updateModel) return;
-    var finger = document.getElementById('finger-select').value;
+    var fingerEl = document.getElementById('finger-select');
+    if (!fingerEl) return;
+    var finger = fingerEl.value;
     var data;
     if (finger === 'total') {
       data = aggregateReachability;
@@ -125,125 +210,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Participant selector
-  var participantSelect = document.getElementById('participant-select');
-  if (participantSelect) {
-    participantSelect.addEventListener('change', function (e) {
-      var index = e.target.value;
-      if (index !== '') {
-        currentParticipant = participantsData[index];
-        applyParticipantData(currentParticipant);
-        updateUIControls(currentParticipant);
-      }
-    });
-  }
+  // ═══════════════════════════════════════════════════════
+  //  SHARED CONTROLS
+  // ═══════════════════════════════════════════════════════
 
-  function applyParticipantData(participant) {
-    if (window.updateModel) {
-      window.updateModel({
-        handedness: participant.handedness,
-        circumference: participant.circumference,
-        length: participant.length,
-        participantData: participant
-      });
-    }
-  }
-
-  function updateUIControls(participant) {
-    var circumferenceEl = document.getElementById('circumference');
-    var circumferenceValueEl = document.getElementById('circumference-value');
-    var lengthEl = document.getElementById('length');
-    var lengthValueEl = document.getElementById('length-value');
-
-    if (circumferenceEl) circumferenceEl.value = participant.circumference;
-    if (circumferenceValueEl) circumferenceValueEl.textContent = participant.circumference;
-    if (lengthEl) lengthEl.value = participant.length;
-    if (lengthValueEl) lengthValueEl.textContent = participant.length;
-
-    // Update summary
-    var summaryPanel = document.getElementById('participant-summary');
-    if (summaryPanel) {
-      summaryPanel.style.display = 'block';
-      document.getElementById('summary-handedness').textContent = participant.handedness;
-      document.getElementById('summary-circumference').textContent = participant.circumference;
-      document.getElementById('summary-length').textContent = participant.length;
-    }
-  }
-
-  // Handedness buttons
-  var handednessButtons = document.querySelectorAll('.handedness-btn');
-  handednessButtons.forEach(function (button) {
-    button.addEventListener('click', function () {
-      handednessButtons.forEach(function (btn) { btn.classList.remove('active'); });
-      button.classList.add('active');
-      var handedness = button.getAttribute('data-handedness');
-      if (window.updateModel) {
-        window.updateModel({ handedness: handedness });
-      }
-    });
-  });
-
-  // Color buttons - behavior depends on mode
-  var colorButtons = document.querySelectorAll('.color-btn');
-  colorButtons.forEach(function (button) {
-    button.addEventListener('click', function () {
-      colorButtons.forEach(function (btn) { btn.classList.remove('active'); });
-      button.classList.add('active');
-      var color = button.getAttribute('data-color');
-
-      if (currentMode === 'aggregate') {
-        applyAggregateView(color);
-      } else if (currentMode === 'preference') {
-        var colorData = currentParticipant ? currentParticipant[color] : null;
-        if (window.updateModel) {
-          window.updateModel({ color: color, colorData: colorData });
-        }
-      }
-      // In reachability mode, color buttons don't apply (heatmap shows all faces)
-    });
-  });
-
-  // Reset button
-  var resetBtn = document.querySelector('.reset-btn');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', function () {
-      colorButtons.forEach(function (btn) { btn.classList.remove('active'); });
-      document.querySelectorAll('.handedness-btn').forEach(function (btn) { btn.classList.remove('active'); });
-      if (window.updateModel) {
-        window.updateModel({ reset: true });
-      }
-      // Re-apply mode view
-      if (currentMode === 'aggregate') applyAggregateView();
-      else if (currentMode === 'reachability') applyReachabilityView();
-    });
-  }
-
-  // Sliders
-  var circumferenceSlider = document.getElementById('circumference');
-  var circumferenceValue = document.getElementById('circumference-value');
-  if (circumferenceSlider) {
-    circumferenceSlider.addEventListener('input', function (e) {
-      var value = e.target.value;
-      circumferenceValue.textContent = value;
-      if (window.updateModel) {
-        window.updateModel({ circumference: parseInt(value) });
-      }
-    });
-  }
-
-  var lengthSlider = document.getElementById('length');
-  var lengthValue = document.getElementById('length-value');
-  if (lengthSlider) {
-    lengthSlider.addEventListener('input', function (e) {
-      var value = e.target.value;
-      lengthValue.textContent = value;
-      if (window.updateModel) {
-        window.updateModel({ length: parseInt(value) });
-      }
-    });
-  }
-
-  // Make data available globally
+  // Make data available globally (for reachability inline scripts)
   window.aggregatePreference = aggregatePreference;
   window.aggregateReachability = aggregateReachability;
 
@@ -275,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Scene & View - Reset View
+  // Scene - Reset View
   var resetViewBtn = document.getElementById('reset-view-btn');
   if (resetViewBtn) {
     resetViewBtn.addEventListener('click', function () {
@@ -285,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Scene & View - Lighting Intensity
+  // Scene - Lighting Intensity
   var lightSlider = document.getElementById('light-intensity');
   var lightValueSpan = document.getElementById('light-intensity-value');
   if (lightSlider) {
@@ -299,12 +270,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ─── Auto-apply default mode on page load ───
-  // Each page sets its own default_mode via a <meta> tag.
-  // On load, we automatically activate the correct visualization.
-  if (currentMode === 'aggregate') {
-    applyAggregateView();
-  } else if (currentMode === 'reachability') {
+  if (currentMode === 'reachability') {
     applyReachabilityView();
   }
-  // 'preference' mode waits for participant selection, no auto-apply needed.
+  // preference mode waits for participant selection
 });

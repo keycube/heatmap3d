@@ -177,54 +177,6 @@ window.updateModel = function(data) {
     return;
   }
   
-  if (data.color && data.colorData) {
-    // Reset all keys to original state first
-    keycubeGroup.children.forEach(child => {
-      if (child.userData?.originalColor) {
-        child.material.color.set(child.userData.originalColor);
-        child.scale.set(1, 1, 1);
-        if (child.userData.originalPosition) {
-          child.position.copy(child.userData.originalPosition);
-        }
-      }
-    });
-    
-    // Apply new visualization — color intensity only, no geometric deformation
-    const prefix = data.color;
-    keycubeGroup.children.forEach(child => {
-      if (child.userData?.face === prefix && child.userData?.index) {
-        const intensity = data.colorData[child.userData.index - 1];
-        
-        // Map intensity to a heatmap color (red=low → yellow → green=high)
-        const normalized = Math.max(0, Math.min(1, intensity / 10));
-        const hue = normalized * 0.33;
-        const color = new THREE.Color();
-        color.setHSL(hue, 0.9, 0.5);
-        child.material.color.set(color);
-        
-      } else if (child.userData?.face && child.userData.face !== prefix) {
-        const tempColor = new THREE.Color(child.userData.originalColor);
-        tempColor.multiplyScalar(0.3);
-        child.material.color.set(tempColor);
-      }
-    });
-  } else if (data.color) {
-    keycubeGroup.children.forEach(child => {
-      if (child.userData?.face === data.color) {
-        child.material.color.set('orange');
-      } else if (child.userData?.originalColor) {
-        child.material.color.set(child.userData.originalColor);
-      }
-      // Always restore scale and position when just highlighting
-      if (child.userData?.originalColor) {
-        child.scale.set(1, 1, 1);
-        if (child.userData.originalPosition) {
-          child.position.copy(child.userData.originalPosition);
-        }
-      }
-    });
-  }
-  
   if (data.circumference || data.length) {
     const circumferenceScale = data.circumference ? data.circumference / 200 : 1;
     const lengthScale = data.length ? data.length / 185 : 1;
@@ -256,25 +208,30 @@ window.updateModel = function(data) {
     directionalLight.intensity = data.lightingIntensity;
   }
 
-  // Heatmap visualization (for aggregate/reachability modes)
+  // ─── Heatmap color helper ───
+  // invert=true: low value → green, high value → red (for preference: 1=best → green)
+  // invert=false: low value → red, high value → green (for reachability: high=good → green)
+  function heatmapColor(normalized, invert) {
+    const hue = (invert ? (1 - normalized) : normalized) * 0.33;
+    const c = new THREE.Color();
+    c.setHSL(hue, 0.9, 0.5);
+    return c;
+  }
+
+  // Heatmap visualization — all faces
   if (data.heatmap) {
     const heatmapData = data.heatmap;
     const min = data.heatmapMin !== undefined ? data.heatmapMin : 0;
     const max = data.heatmapMax !== undefined ? data.heatmapMax : 1;
     const range = max - min || 1;
+    const invert = !!data.heatmapInvert; // true for preference data
 
     keycubeGroup.children.forEach(child => {
       if (child.userData?.face && child.userData?.index && heatmapData[child.userData.face]) {
         const value = heatmapData[child.userData.face][child.userData.index - 1];
         const normalized = Math.max(0, Math.min(1, (value - min) / range));
+        child.material.color.set(heatmapColor(normalized, invert));
 
-        // Color: red (low) → yellow (mid) → green (high)
-        const hue = normalized * 0.33;
-        const color = new THREE.Color();
-        color.setHSL(hue, 0.9, 0.5);
-        child.material.color.set(color);
-
-        // Reset geometry to original — heatmap uses color only, no deformation
         child.scale.set(1, 1, 1);
         if (child.userData.originalPosition) {
           child.position.copy(child.userData.originalPosition);
@@ -285,6 +242,34 @@ window.updateModel = function(data) {
         if (child.userData.originalPosition) {
           child.position.copy(child.userData.originalPosition);
         }
+      }
+    });
+  }
+
+  // Heatmap visualization — single face highlighted, others dimmed
+  if (data.heatmapSingleFace) {
+    const heatmapData = data.heatmapSingleFace;
+    const min = data.heatmapMin !== undefined ? data.heatmapMin : 0;
+    const max = data.heatmapMax !== undefined ? data.heatmapMax : 1;
+    const range = max - min || 1;
+    const invert = !!data.heatmapInvert;
+
+    keycubeGroup.children.forEach(child => {
+      if (!child.userData?.face || !child.userData?.index) return;
+
+      child.scale.set(1, 1, 1);
+      if (child.userData.originalPosition) {
+        child.position.copy(child.userData.originalPosition);
+      }
+
+      if (heatmapData[child.userData.face]) {
+        const value = heatmapData[child.userData.face][child.userData.index - 1];
+        const normalized = Math.max(0, Math.min(1, (value - min) / range));
+        child.material.color.set(heatmapColor(normalized, invert));
+      } else {
+        const dimmed = new THREE.Color(child.userData.originalColor);
+        dimmed.multiplyScalar(0.3);
+        child.material.color.set(dimmed);
       }
     });
   }

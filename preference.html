@@ -9,95 +9,69 @@ permalink: /preference
 
 <div class="main-container">
   <div id="controls">
-    <div class="controls-section active">
-      <h3>Preference Mode</h3>
-      <div class="section-content" style="display: block;">
-        <div id="mode-description">Select a participant then click a face color to view their finger-to-key preferences (lower key = higher preference).</div>
-      </div>
-    </div>
 
+    <!-- ─── Participant Selection ─── -->
     <div class="controls-section active">
       <h3>Select Participant</h3>
       <div class="section-content" style="display: block;">
         <select id="participant-select">
           <option value="">Choose a participant...</option>
+          <option value="aggregate">📊 Aggregate (Mean of all 22)</option>
           {% for row in site.data.preferences %}
-            <option value="{{ forloop.index0 }}" data-handedness="{{ row.Handedness }}" data-circumference="{{ row.CircumferenceRightHand }}" data-length="{{ row.LengthRightHand }}">
-              Participant {{ row.Number }} ({{ row.Handedness | capitalize }}, {{ row.CircumferenceRightHand }}mm circumference)
+            <option value="{{ forloop.index0 }}">
+              Participant {{ row.Number }} ({{ row.Handedness | capitalize }}, {{ row.CircumferenceRightHand }}mm)
             </option>
           {% endfor %}
         </select>
-        <p><small>Select a participant to automatically load their hand measurements and preference data.</small></p>
+        <div id="mode-description">Select a participant to view their individual preference data, or choose <strong>Aggregate</strong> to see the mean across all participants.</div>
       </div>
     </div>
 
+    <!-- ─── Participant Summary (hidden until selection) ─── -->
     <div class="controls-section" id="participant-summary" style="display: none;">
-      <h4>Participant Data Summary</h4>
-      <p><strong>Handedness:</strong> <span id="summary-handedness"></span></p>
-      <p><strong>Hand Circumference:</strong> <span id="summary-circumference"></span> mm</p>
-      <p><strong>Hand Length:</strong> <span id="summary-length"></span> mm</p>
+      <h3>Participant Info</h3>
+      <div class="section-content" style="display: block;">
+        <p><strong>Handedness:</strong> <span id="summary-handedness"></span></p>
+        <p><strong>Hand Circumference:</strong> <span id="summary-circumference"></span> mm</p>
+        <p><strong>Hand Length:</strong> <span id="summary-length"></span> mm</p>
+      </div>
     </div>
 
-    <div class="controls-section">
-      <h3>Color Preferences Visualization</h3>
-      <div class="section-content">
-        <p><small>Click a color to visualize preference intensity. <strong>Lower keys = Higher preference</strong>. Key brightness also represents preference strength (1-10 scale).</small></p>
+    <!-- ─── Face Selection ─── -->
+    <div class="controls-section active">
+      <h3>Face Selection</h3>
+      <div class="section-content" style="display: block;">
+        <p><small>Click a face color to isolate its data, or use <strong>Show All</strong> for the full heatmap.</small></p>
         <div class="button-group">
-          <button class="color-btn" data-color="R" data-tooltip="Show red face preference data" style="background: #ff6b6b; color: white;">Red Keys (R1-R16)</button>
-          <button class="color-btn" data-color="B" data-tooltip="Show blue face preference data" style="background: #4dabf7; color: white;">Blue Keys (B1-B16)</button>
-          <button class="color-btn" data-color="G" data-tooltip="Show green face preference data" style="background: #51cf66; color: white;">Green Keys (G1-G16)</button>
-          <button class="color-btn" data-color="W" data-tooltip="Show white face preference data" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">White Keys (W1-W16)</button>
-          <button class="color-btn" data-color="Y" data-tooltip="Show yellow face preference data" style="background: #ffd43b; color: black;">Yellow Keys (Y1-Y16)</button>
-          <button class="reset-btn" data-tooltip="Reset all keys to original colors" style="background: #868e96; color: white;">Reset Colors</button>
+          <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">Red (R)</button>
+          <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">Blue (B)</button>
+          <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">Green (G)</button>
+          <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">White (W)</button>
+          <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">Yellow (Y)</button>
+          <button class="reset-btn" style="background: #868e96; color: white;">Show All</button>
         </div>
       </div>
     </div>
 
-    <div class="controls-section">
-      <h3>Manual Controls</h3>
-      <div class="section-content">
-        <div class="measurement-controls">
-          <div>
-            <h4>Handedness</h4>
-            <div class="button-group">
-              <button class="handedness-btn" data-tooltip="Mirror cube for right hand" data-handedness="right">Right</button>
-              <button class="handedness-btn" data-tooltip="Mirror cube for left hand" data-handedness="left">Left</button>
-            </div>
-          </div>
-          <div>
-            <h4>Hand Measurements</h4>
-            <div class="measurement-item">
-              <label for="circumference">Circumference: </label>
-              <input type="range" id="circumference" min="170" max="230" value="200">
-              <span id="circumference-value">200</span>mm
-            </div>
-            <div class="measurement-item">
-              <label for="length">Length: </label>
-              <input type="range" id="length" min="160" max="210" value="185">
-              <span id="length-value">185</span>mm
-            </div>
+    <!-- ─── Active Selection + Legend ─── -->
+    <div class="controls-section active" id="active-selection-panel">
+      <h3>Active Selection</h3>
+      <div class="section-content" style="display: block;">
+        <div class="active-selection-display">
+          <div class="selection-badge" id="selection-badge">
+            <span class="selection-icon" id="selection-icon">🎯</span>
+            <span class="selection-text" id="selection-text">No participant selected</span>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="controls-section">
-      <h3>Display Options</h3>
-      <div class="section-content">
-        <div class="display-option">
-          <label for="wireframe-toggle">Wireframe</label>
-          <label class="switch">
-            <input type="checkbox" id="wireframe-toggle">
-            <span class="slider"></span>
-          </label>
-        </div>
-        <div class="display-option">
-          <label for="bg-color-picker">Background</label>
-          <input type="color" id="bg-color-picker" value="#ffffff">
+        <div class="heatmap-legend">
+          <span>Low preference</span>
+          <div class="heatmap-gradient"></div>
+          <span>High preference</span>
         </div>
       </div>
     </div>
 
+    <!-- ─── Study Info ─── -->
     <div class="controls-section">
       <h3>Study Info</h3>
       <div class="section-content">
@@ -108,24 +82,22 @@ permalink: /preference
             <div class="study-stat-item"><strong>77.4%</strong>Preferred Diagonal</div>
             <div class="study-stat-item"><strong>80</strong>Keys (5 faces)</div>
           </div>
-          <p><strong>Study 1:</strong> Identified preferred holding positions. <span class="stat">Diagonal position</span> chosen by 77.4% of participants (both hands, forearms bent, touchscreen down).</p>
-          <p><strong>Study 2:</strong> Mapped finger-to-key preferences and reachability in diagonal position. Thumbs cover the widest area (red + internal faces).</p>
+          <p><strong>Study 1:</strong> Identified preferred holding positions. Diagonal position chosen by 77.4% of participants.</p>
+          <p><strong>Study 2:</strong> Mapped finger-to-key preferences in diagonal position. Values range from 1 (most preferred) to 10 (least preferred).</p>
+          <p><strong>Color scale:</strong> Green (high preference / low rank) → Yellow → Red (low preference / high rank).</p>
           <p><strong>Face orientation:</strong> Red (top), Blue &amp; Yellow (external), White &amp; Green (internal, facing body).</p>
         </div>
       </div>
     </div>
 
+    <!-- ─── Scene ─── -->
     <div class="controls-section">
-      <h3>Scene &amp; View</h3>
+      <h3>Scene</h3>
       <div class="section-content">
-        <button class="scene-btn" id="reset-view-btn" data-tooltip="Reset camera to default position">Reset View</button>
-        <div class="display-option">
-          <label for="light-intensity">Lighting</label>
-          <input type="range" id="light-intensity" min="0" max="200" value="80">
-          <span id="light-intensity-value">80</span>%
-        </div>
+        <button class="scene-btn" id="reset-view-btn">Reset View</button>
       </div>
     </div>
+
   </div>
   <div id="model-container"></div>
 </div>

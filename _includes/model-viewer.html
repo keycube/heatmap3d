@@ -60,25 +60,48 @@ const faces = [
   { axis: 'z', sign: 1, prefix: 'G', color: 'green' }
 ];
 
-// Create text label sprite
-function createTextSprite(text) {
+// Create text label as a small plane decal stuck on the key surface
+function createTextLabel(text, axis, sign) {
   const canvas = document.createElement('canvas');
   canvas.width = 128;
   canvas.height = 128;
   const ctx = canvas.getContext('2d');
-  ctx.font = 'bold 52px Arial';
+  ctx.clearRect(0, 0, 128, 128);
+  ctx.font = 'bold 56px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+  ctx.lineWidth = 4;
   ctx.strokeText(text, 64, 64);
   ctx.fillStyle = 'white';
   ctx.fillText(text, 64, 64);
+
   const texture = new THREE.CanvasTexture(canvas);
-  const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
-  const sprite = new THREE.Sprite(material);
-  sprite.scale.set(0.11, 0.11, 0.11);
-  return sprite;
+  texture.minFilter = THREE.LinearFilter;
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: true,
+    depthWrite: false,
+    side: THREE.FrontSide
+  });
+
+  const planeSize = 0.13;
+  const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // Orient the plane to face outward from the key surface
+  if (axis === 'y') {
+    mesh.rotation.x = sign > 0 ? -Math.PI / 2 : Math.PI / 2;
+  } else if (axis === 'x') {
+    mesh.rotation.y = sign > 0 ? Math.PI / 2 : -Math.PI / 2;
+  } else {
+    // z axis: sign > 0 faces toward camera (no rotation needed), sign < 0 faces away
+    if (sign < 0) mesh.rotation.y = Math.PI;
+  }
+
+  mesh.userData = { isLabel: true };
+  return mesh;
 }
 
 // Create keys
@@ -108,16 +131,15 @@ faces.forEach(({ axis, sign, prefix, color }) => {
 
       keycubeGroup.add(key);
 
-      // Add text label floating just above the key
-      const label = createTextSprite(keyID);
-      label.userData = { isLabel: true };
-      const labelOffset = 0.09;
+      // Add text label flush on the key's outer surface
+      const label = createTextLabel(keyID, axis, sign);
+      const labelLift = 0.078; // half key height + tiny gap to avoid z-fighting
       if (axis === 'y') {
-        label.position.set(u, (offset + labelOffset) * sign, v);
+        label.position.set(u, (offset + labelLift) * sign, v);
       } else if (axis === 'x') {
-        label.position.set((offset + labelOffset) * sign, u, v);
+        label.position.set((offset + labelLift) * sign, u, v);
       } else {
-        label.position.set(u, v, (offset + labelOffset) * sign);
+        label.position.set(u, v, (offset + labelLift) * sign);
       }
       keycubeGroup.add(label);
     }
@@ -188,7 +210,7 @@ window.updateModel = function(data) {
 
   if (data.wireframe !== undefined) {
     scene.traverse(function (child) {
-        if (child.isMesh) {
+        if (child.isMesh && !child.userData?.isLabel) {
             child.material.wireframe = data.wireframe;
         }
     });

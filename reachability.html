@@ -9,64 +9,130 @@ permalink: /reachability
 
 <div class="main-container">
   <div id="controls">
+
+    <!-- ─── Hand Selector ───
+         UX pattern inspired by PlayStation DualSense analog stick layout.
+         Ref: https://direct.playstation.com/en-us/buy-accessories/dualsense-wireless-controller
+         Two circular zones represent each hand; fingers are positioned anatomically.
+         Design pattern: radial menu around a central element.
+         Ref: https://www.nngroup.com/articles/radial-menus/ -->
     <div class="controls-section active">
-      <h3>Reachability Mode</h3>
+      <h3>Hand &amp; Finger Selection</h3>
       <div class="section-content" style="display: block;">
-        <div id="mode-description">Heatmap of finger-to-key reachability scores. Green = easily reachable, Red = unreachable. Filter by specific finger below.</div>
-        <div id="reachability-options">
-          <label for="finger-select"><strong>Finger filter:</strong></label>
-          <select class="finger-select" id="finger-select">
-            <option value="total">All Fingers (Total)</option>
-            <optgroup label="Left Hand">
-              <option value="LT">Left Thumb</option>
-              <option value="LI">Left Index</option>
-              <option value="LM">Left Middle</option>
-              <option value="LR">Left Ring</option>
-              <option value="LL">Left Little</option>
-            </optgroup>
-            <optgroup label="Right Hand">
-              <option value="RT">Right Thumb</option>
-              <option value="RI">Right Index</option>
-              <option value="RM">Right Middle</option>
-              <option value="RR">Right Ring</option>
-              <option value="RL">Right Little</option>
-            </optgroup>
-          </select>
-          <div class="heatmap-legend">
-            <span>Low</span>
-            <div class="heatmap-gradient"></div>
-            <span>High</span>
+        <div id="mode-description">Select a hand to view its finger reachability on the cube. Then tap a specific finger for detailed data.</div>
+
+        <div class="hand-selector-container">
+          <!-- Left Hand Analog -->
+          <div class="hand-analog" id="left-hand-analog">
+            <div class="analog-label">Left Hand</div>
+            <div class="analog-ring" data-hand="left">
+              <div class="analog-stick">
+                <span class="hand-emoji">🤚</span>
+              </div>
+              <!-- Finger dots positioned anatomically around the ring
+                   T=Thumb, I=Index, M=Middle, R=Ring, L=Little -->
+              <button class="finger-dot finger-thumb-left" data-finger="LT" data-tooltip="Left Thumb">
+                <span class="finger-letter">T</span>
+              </button>
+              <button class="finger-dot finger-index-left" data-finger="LI" data-tooltip="Left Index">
+                <span class="finger-letter">I</span>
+              </button>
+              <button class="finger-dot finger-middle-left" data-finger="LM" data-tooltip="Left Middle">
+                <span class="finger-letter">M</span>
+              </button>
+              <button class="finger-dot finger-ring-left" data-finger="LR" data-tooltip="Left Ring">
+                <span class="finger-letter">R</span>
+              </button>
+              <button class="finger-dot finger-little-left" data-finger="LL" data-tooltip="Left Little">
+                <span class="finger-letter">L</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="hand-divider">
+            <span>or</span>
+          </div>
+
+          <!-- Right Hand Analog -->
+          <div class="hand-analog" id="right-hand-analog">
+            <div class="analog-label">Right Hand</div>
+            <div class="analog-ring" data-hand="right">
+              <div class="analog-stick">
+                <span class="hand-emoji">🤚</span>
+              </div>
+              <!-- Finger dots mirrored for right hand -->
+              <button class="finger-dot finger-thumb-right" data-finger="RT" data-tooltip="Right Thumb">
+                <span class="finger-letter">T</span>
+              </button>
+              <button class="finger-dot finger-index-right" data-finger="RI" data-tooltip="Right Index">
+                <span class="finger-letter">I</span>
+              </button>
+              <button class="finger-dot finger-middle-right" data-finger="RM" data-tooltip="Right Middle">
+                <span class="finger-letter">M</span>
+              </button>
+              <button class="finger-dot finger-ring-right" data-finger="RR" data-tooltip="Right Ring">
+                <span class="finger-letter">R</span>
+              </button>
+              <button class="finger-dot finger-little-right" data-finger="RL" data-tooltip="Right Little">
+                <span class="finger-letter">L</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        <!-- Quick actions -->
+        <div class="hand-actions">
+          <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="Show combined reachability for all fingers">All Fingers</button>
+          <button class="hand-action-btn" id="btn-left-all" data-tooltip="Show all left hand fingers combined">Left All</button>
+          <button class="hand-action-btn" id="btn-right-all" data-tooltip="Show all right hand fingers combined">Right All</button>
+        </div>
+
+        <!-- Hidden select kept for dataviz.js compatibility -->
+        <select class="finger-select" id="finger-select" style="display:none;">
+          <option value="total">All Fingers (Total)</option>
+          <option value="LT">Left Thumb</option>
+          <option value="LI">Left Index</option>
+          <option value="LM">Left Middle</option>
+          <option value="LR">Left Ring</option>
+          <option value="LL">Left Little</option>
+          <option value="RT">Right Thumb</option>
+          <option value="RI">Right Index</option>
+          <option value="RM">Right Middle</option>
+          <option value="RR">Right Ring</option>
+          <option value="RL">Right Little</option>
+        </select>
       </div>
     </div>
 
-    <div class="controls-section">
-      <h3>Display Options</h3>
-      <div class="section-content">
-        <div class="display-option">
-          <label for="wireframe-toggle">Wireframe</label>
-          <label class="switch">
-            <input type="checkbox" id="wireframe-toggle">
-            <span class="slider"></span>
-          </label>
+    <!-- ─── Active Selection + Legend ─── -->
+    <div class="controls-section active" id="active-selection-panel">
+      <h3>Active Selection</h3>
+      <div class="section-content" style="display: block;">
+        <div class="active-selection-display">
+          <div class="selection-badge" id="selection-badge">
+            <span class="selection-icon">🖐️</span>
+            <span class="selection-text" id="selection-text">All Fingers (Total)</span>
+          </div>
         </div>
-        <div class="display-option">
-          <label for="bg-color-picker">Background</label>
-          <input type="color" id="bg-color-picker" value="#000000">
+        <div class="heatmap-legend">
+          <span>Low</span>
+          <div class="heatmap-gradient"></div>
+          <span>High</span>
         </div>
       </div>
     </div>
 
+    <!-- ─── Study Info ─── -->
     <div class="controls-section">
       <h3>Study Info</h3>
       <div class="section-content">
         <div class="study-info">
           <div class="study-stat-grid">
-            <div class="study-stat-item"><strong>31</strong>Participants (Study 1)</div>
-            <div class="study-stat-item"><strong>22</strong>Participants (Study 2)</div>
-            <div class="study-stat-item"><strong>77.4%</strong>Preferred Diagonal</div>
+            <div class="study-stat-item"><strong>22</strong>Participants</div>
             <div class="study-stat-item"><strong>80</strong>Keys (5 faces)</div>
+            <div class="study-stat-item"><strong>10</strong>Fingers mapped</div>
+            <div class="study-stat-item"><strong>77.4%</strong>Diagonal hold</div>
           </div>
           <p><strong>Study 2:</strong> Mapped finger-to-key reachability in the diagonal holding position. Each key's score represents how many participants could reach it with a given finger.</p>
           <p><strong>Color scale:</strong> Red (low reachability) → Yellow → Green (high reachability).</p>
@@ -75,17 +141,149 @@ permalink: /reachability
       </div>
     </div>
 
+    <!-- ─── Scene (minimal) ─── -->
     <div class="controls-section">
-      <h3>Scene &amp; View</h3>
+      <h3>Scene</h3>
       <div class="section-content">
         <button class="scene-btn" id="reset-view-btn" data-tooltip="Reset camera to default position">Reset View</button>
-        <div class="display-option">
-          <label for="light-intensity">Lighting</label>
-          <input type="range" id="light-intensity" min="0" max="200" value="80">
-          <span id="light-intensity-value">80</span>%
-        </div>
       </div>
     </div>
+
   </div>
   <div id="model-container"></div>
 </div>
+
+<!-- ─── Reachability-specific hand selector logic ───
+     This script bridges the analog-stick UI to the existing
+     finger-select <select> that dataviz.js already listens to. -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var fingerSelect = document.getElementById('finger-select');
+  var selectionText = document.getElementById('selection-text');
+  var selectionBadge = document.getElementById('selection-badge');
+  var selectionIcon = selectionBadge ? selectionBadge.querySelector('.selection-icon') : null;
+  var allFingerDots = document.querySelectorAll('.finger-dot');
+  var analogRings = document.querySelectorAll('.analog-ring');
+  var btnAllFingers = document.getElementById('btn-all-fingers');
+  var btnLeftAll = document.getElementById('btn-left-all');
+  var btnRightAll = document.getElementById('btn-right-all');
+  var handActionBtns = document.querySelectorAll('.hand-action-btn');
+
+  // Display names for each finger code
+  var fingerNames = {
+    'total': 'All Fingers (Total)',
+    'LT': 'Left Thumb', 'LI': 'Left Index', 'LM': 'Left Middle',
+    'LR': 'Left Ring', 'LL': 'Left Little',
+    'RT': 'Right Thumb', 'RI': 'Right Index', 'RM': 'Right Middle',
+    'RR': 'Right Ring', 'RL': 'Right Little',
+    'left-all': 'Left Hand (All fingers)', 'right-all': 'Right Hand (All fingers)'
+  };
+
+  var fingerIcons = {
+    'total': '🖐️', 'left-all': '🤚', 'right-all': '🤚',
+    'LT': '👍', 'LI': '☝️', 'LM': '🖕', 'LR': '💍', 'LL': '🤙',
+    'RT': '👍', 'RI': '☝️', 'RM': '🖕', 'RR': '💍', 'RL': '🤙'
+  };
+
+  // ── Update selection state ──
+  function updateSelection(fingerValue) {
+    // Drive the hidden <select> → triggers dataviz.js change handler
+    if (fingerSelect) {
+      fingerSelect.value = fingerValue;
+      fingerSelect.dispatchEvent(new Event('change'));
+    }
+    // Update badge display
+    if (selectionText) selectionText.textContent = fingerNames[fingerValue] || fingerValue;
+    if (selectionIcon) selectionIcon.textContent = fingerIcons[fingerValue] || '🖐️';
+
+    // Highlight active finger dot
+    allFingerDots.forEach(function (dot) {
+      dot.classList.toggle('active', dot.getAttribute('data-finger') === fingerValue);
+    });
+    // Highlight active analog ring
+    analogRings.forEach(function (ring) { ring.classList.remove('active'); });
+    if (fingerValue.charAt(0) === 'L') {
+      var leftRing = document.querySelector('.analog-ring[data-hand="left"]');
+      if (leftRing) leftRing.classList.add('active');
+    } else if (fingerValue.charAt(0) === 'R') {
+      var rightRing = document.querySelector('.analog-ring[data-hand="right"]');
+      if (rightRing) rightRing.classList.add('active');
+    }
+    // Quick-action buttons
+    handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
+    if (fingerValue === 'total') btnAllFingers.classList.add('active');
+  }
+
+  // ── Per-hand aggregate ──
+  // Computes combined reachability for all 5 fingers of one hand,
+  // summed across all participants. Uses window.perFingerReachability
+  // which is populated by dataviz-data.html (Jekyll-generated).
+  function handleHandAll(hand) {
+    var fingers = hand === 'left'
+      ? ['LT','LI','LM','LR','LL']
+      : ['RT','RI','RM','RR','RL'];
+    var faces = ['R','B','G','W','Y'];
+    var result = { R: [], B: [], G: [], W: [], Y: [] };
+
+    faces.forEach(function (face) {
+      for (var i = 0; i < 16; i++) {
+        var sum = 0;
+        fingers.forEach(function (f) {
+          var fData = window.perFingerReachability[f];
+          if (fData) fData.forEach(function (p) { sum += p[face][i]; });
+        });
+        result[face].push(sum);
+      }
+    });
+
+    // Compute range for heatmap normalization
+    var min = Infinity, max = -Infinity;
+    faces.forEach(function (face) {
+      result[face].forEach(function (v) {
+        if (v < min) min = v;
+        if (v > max) max = v;
+      });
+    });
+
+    if (window.updateModel) {
+      window.updateModel({ heatmap: result, heatmapMin: min, heatmapMax: max });
+    }
+
+    // Update UI
+    var key = hand + '-all';
+    if (selectionText) selectionText.textContent = fingerNames[key];
+    if (selectionIcon) selectionIcon.textContent = fingerIcons[key];
+
+    allFingerDots.forEach(function (dot) {
+      var f = dot.getAttribute('data-finger');
+      dot.classList.toggle('active', fingers.indexOf(f) !== -1);
+    });
+    analogRings.forEach(function (ring) { ring.classList.remove('active'); });
+    var targetRing = document.querySelector('.analog-ring[data-hand="' + hand + '"]');
+    if (targetRing) targetRing.classList.add('active');
+
+    handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
+    if (hand === 'left') btnLeftAll.classList.add('active');
+    else btnRightAll.classList.add('active');
+  }
+
+  // ── Event listeners ──
+  allFingerDots.forEach(function (dot) {
+    dot.addEventListener('click', function (e) {
+      e.stopPropagation();
+      updateSelection(dot.getAttribute('data-finger'));
+    });
+  });
+
+  analogRings.forEach(function (ring) {
+    ring.addEventListener('click', function (e) {
+      if (e.target.closest('.finger-dot')) return; // let dot handle it
+      handleHandAll(ring.getAttribute('data-hand'));
+    });
+  });
+
+  if (btnAllFingers) btnAllFingers.addEventListener('click', function () { updateSelection('total'); });
+  if (btnLeftAll) btnLeftAll.addEventListener('click', function () { handleHandAll('left'); });
+  if (btnRightAll) btnRightAll.addEventListener('click', function () { handleHandAll('right'); });
+});
+</script>

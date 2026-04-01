@@ -303,3 +303,270 @@ input[type="range"]::-moz-range-thumb {
   .measurement-controls { gap: 30px; }
   .controls-section { padding: 20px; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Hand Selector – PlayStation Analog Style
+   Reachability page only
+   ═══════════════════════════════════════════════════════ */
+#mode-description {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+.hand-selector-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 10px 0 18px;
+}
+
+.hand-analog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.analog-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.analog-ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f8f8f8 0%, #ebebeb 70%, #ddd 100%);
+  border: 3px solid #ccc;
+  cursor: pointer;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.15s;
+}
+
+.analog-ring:hover {
+  border-color: #888;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.12);
+  transform: scale(1.04);
+}
+
+.analog-ring.active {
+  border-color: #4dabf7;
+  box-shadow: 0 0 20px rgba(77, 171, 247, 0.35);
+}
+
+.analog-stick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fff, #e6e6e6);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hand-emoji {
+  font-size: 20px;
+}
+
+/* ── Finger dots positioned anatomically around each ring ── */
+.finger-dot {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #aaa;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 2;
+  padding: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.finger-dot:hover {
+  background: #4dabf7;
+  border-color: #4dabf7;
+  color: #fff;
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(77, 171, 247, 0.5);
+}
+
+.finger-dot.active {
+  background: #4dabf7;
+  border-color: #228be6;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(77, 171, 247, 0.6);
+  transform: scale(1.15);
+}
+
+.finger-letter {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Left hand: anatomical layout (thumb on right side of circle) */
+.finger-thumb-left  { top: 58%;  right: -14px; }  /* thumb = outer right */
+.finger-index-left  { top: 4%;   right: 4px;   }  /* index = upper right */
+.finger-middle-left { top: -10px; left: 50%;  transform: translateX(-50%); } /* middle = top */
+.finger-ring-left   { top: 4%;   left: 4px;    }  /* ring = upper left */
+.finger-little-left { top: 42%;  left: -14px;  }  /* little = outer left */
+
+/* Right hand: mirrored (thumb on left side of circle) */
+.finger-thumb-right  { top: 58%;  left: -14px;  }  /* thumb = outer left */
+.finger-index-right  { top: 4%;   left: 4px;    }  /* index = upper left */
+.finger-middle-right { top: -10px; left: 50%; transform: translateX(-50%); } /* middle = top */
+.finger-ring-right   { top: 4%;   right: 4px;   }  /* ring = upper right */
+.finger-little-right { top: 42%;  right: -14px; }  /* little = outer right */
+
+/* ── Tooltips for finger dots ── */
+.finger-dot[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Divider ── */
+.hand-divider {
+  display: flex;
+  align-items: center;
+  color: #aaa;
+  font-size: 13px;
+  font-style: italic;
+  padding: 0 4px;
+}
+
+/* ── Quick action buttons ── */
+.hand-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hand-action-btn {
+  padding: 6px 14px;
+  border: 2px solid #ddd;
+  border-radius: 20px;
+  background: #f8f8f8;
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: auto;
+}
+
+.hand-action-btn:hover {
+  background: #e8f4fd;
+  border-color: #4dabf7;
+  color: #228be6;
+}
+
+.hand-action-btn.active {
+  background: #4dabf7;
+  border-color: #228be6;
+  color: #fff;
+}
+
+/* ── Active selection display ── */
+.active-selection-display {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.selection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #e8f4fd, #dbeafe);
+  border: 2px solid #93c5fd;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.selection-icon {
+  font-size: 20px;
+}
+
+/* ── Heatmap legend ── */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.heatmap-gradient {
+  width: 120px;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(to right, #ff0000, #ffff00, #00ff00);
+  border: 1px solid #ddd;
+}
+
+/* ── Responsive adjustments for hand selector ── */
+@media (max-width: 768px) {
+  .hand-selector-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .hand-divider {
+    transform: rotate(90deg);
+  }
+  .analog-ring {
+    width: 110px;
+    height: 110px;
+  }
+}
+
+@media (max-width: 480px) {
+  .analog-ring {
+    width: 100px;
+    height: 100px;
+  }
+  .finger-dot {
+    width: 24px;
+    height: 24px;
+  }
+  .finger-letter {
+    font-size: 10px;
+  }
+  .hand-action-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}

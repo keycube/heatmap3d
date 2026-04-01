@@ -89,7 +89,7 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       const keyIndex = i * 4 + j + 1;
       const keyID = `${prefix}${keyIndex}`;
       
-      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color };
+      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis: axis, sign: sign };
       key.name = keyID;
 
       const u = (i - 1.5) * spacing;
@@ -102,6 +102,9 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       } else {
         key.position.set(u, v, offset * sign);
       }
+
+      // Store original position immediately at creation time
+      key.userData.originalPosition = key.position.clone();
 
       keycubeGroup.add(key);
 
@@ -159,12 +162,14 @@ window.updateModel = function(data) {
   }
   
   if (data.reset) {
-    // Reset all colors and scales to original
+    // Reset all colors, scales, and positions to original
     keycubeGroup.children.forEach(child => {
       if (child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
         child.scale.set(1, 1, 1);
-        child.position.copy(child.userData.originalPosition || child.position);
+        if (child.userData.originalPosition) {
+          child.position.copy(child.userData.originalPosition);
+        }
       }
     });
     keycubeGroup.scale.setScalar(1);
@@ -178,8 +183,8 @@ window.updateModel = function(data) {
       if (child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
         child.scale.set(1, 1, 1);
-        if (!child.userData.originalPosition) {
-          child.userData.originalPosition = child.position.clone();
+        if (child.userData.originalPosition) {
+          child.position.copy(child.userData.originalPosition);
         }
       }
     });
@@ -197,11 +202,19 @@ window.updateModel = function(data) {
         tempColor.multiplyScalar(normalizedIntensity + 0.5);
         child.material.color.set(tempColor);
         
+        // Scale along the face's normal axis (outward protrusion)
         const heightScale = 1.1 - (intensity / 10) * 0.8;
-        child.scale.y = heightScale;
-        
-        const originalY = child.userData.originalPosition.y;
-        child.position.y = originalY + (heightScale - 1) * 0.1;
+        const ax = child.userData.axis;
+        if (ax === 'y') {
+          child.scale.set(1, heightScale, 1);
+          child.position.y = child.userData.originalPosition.y + (heightScale - 1) * 0.1 * child.userData.sign;
+        } else if (ax === 'x') {
+          child.scale.set(heightScale, 1, 1);
+          child.position.x = child.userData.originalPosition.x + (heightScale - 1) * 0.1 * child.userData.sign;
+        } else {
+          child.scale.set(1, 1, heightScale);
+          child.position.z = child.userData.originalPosition.z + (heightScale - 1) * 0.1 * child.userData.sign;
+        }
         
       } else if (child.userData?.face && child.userData.face !== prefix) {
         const tempColor = new THREE.Color(child.userData.originalColor);
@@ -214,10 +227,15 @@ window.updateModel = function(data) {
     keycubeGroup.children.forEach(child => {
       if (child.userData?.face === data.color) {
         child.material.color.set('orange');
-        child.scale.set(1, 1, 1);
       } else if (child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
+      }
+      // Always restore scale and position when just highlighting
+      if (child.userData?.originalColor) {
         child.scale.set(1, 1, 1);
+        if (child.userData.originalPosition) {
+          child.position.copy(child.userData.originalPosition);
+        }
       }
     });
   }
@@ -265,22 +283,35 @@ window.updateModel = function(data) {
         const value = heatmapData[child.userData.face][child.userData.index - 1];
         const normalized = Math.max(0, Math.min(1, (value - min) / range));
 
-        if (!child.userData.originalPosition) {
-          child.userData.originalPosition = child.position.clone();
-        }
-
+        // Color: red (low) → yellow (mid) → green (high)
         const hue = normalized * 0.33;
         const color = new THREE.Color();
         color.setHSL(hue, 0.9, 0.5);
         child.material.color.set(color);
 
+        // Scale along the face's normal axis only
         const heightScale = 0.4 + normalized * 0.8;
-        child.scale.y = heightScale;
-        const originalY = child.userData.originalPosition.y;
-        child.position.y = originalY + (heightScale - 1) * 0.05;
+        const ax = child.userData.axis;
+        const sg = child.userData.sign;
+        // Reset scale and position first
+        child.scale.set(1, 1, 1);
+        child.position.copy(child.userData.originalPosition);
+        if (ax === 'y') {
+          child.scale.y = heightScale;
+          child.position.y = child.userData.originalPosition.y + (heightScale - 1) * 0.05 * sg;
+        } else if (ax === 'x') {
+          child.scale.x = heightScale;
+          child.position.x = child.userData.originalPosition.x + (heightScale - 1) * 0.05 * sg;
+        } else {
+          child.scale.z = heightScale;
+          child.position.z = child.userData.originalPosition.z + (heightScale - 1) * 0.05 * sg;
+        }
       } else if (child !== cube && child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
         child.scale.set(1, 1, 1);
+        if (child.userData.originalPosition) {
+          child.position.copy(child.userData.originalPosition);
+        }
       }
     });
   }

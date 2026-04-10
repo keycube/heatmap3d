@@ -129,8 +129,12 @@ document.addEventListener('DOMContentLoaded', function () {
           });
           window.updateModel({
             handedness: currentParticipant.handedness,
-            circumference: currentParticipant.circumference,
-            length: currentParticipant.length
+            circumference: currentParticipant.circumferenceRight,
+            length: currentParticipant.lengthRight,
+            span: currentParticipant.spanRight,
+            circumferenceLeft: currentParticipant.circumferenceLeft,
+            lengthLeft: currentParticipant.lengthLeft,
+            spanLeft: currentParticipant.spanLeft
           });
         }
         // Update summary panel
@@ -139,9 +143,11 @@ document.addEventListener('DOMContentLoaded', function () {
           var sh = document.getElementById('summary-handedness');
           var sc = document.getElementById('summary-circumference');
           var sl = document.getElementById('summary-length');
+          var ss = document.getElementById('summary-span');
           if (sh) sh.textContent = currentParticipant.handedness;
-          if (sc) sc.textContent = currentParticipant.circumference;
-          if (sl) sl.textContent = currentParticipant.length;
+          if (sc) sc.textContent = currentParticipant.circumferenceRight;
+          if (sl) sl.textContent = currentParticipant.lengthRight;
+          if (ss) ss.textContent = currentParticipant.spanRight;
         }
         updateSelectionBadge('👤', 'Participant ' + currentParticipant.number +
           ' (' + currentParticipant.handedness + ')');

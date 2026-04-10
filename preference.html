@@ -19,7 +19,7 @@ permalink: /preference
           <option value="aggregate">📊 Aggregate (Mean of all 22)</option>
           {% for row in site.data.preferences %}
             <option value="{{ forloop.index0 }}">
-              Participant {{ row.Number }} ({{ row.Handedness | capitalize }}, {{ row.CircumferenceRightHand }}mm)
+              Participant {{ row.Number }} ({{ row.Handedness | capitalize }}, span {{ row.SpanRightHand }}mm)
             </option>
           {% endfor %}
         </select>
@@ -34,6 +34,7 @@ permalink: /preference
         <p><strong>Handedness:</strong> <span id="summary-handedness"></span></p>
         <p><strong>Hand Circumference:</strong> <span id="summary-circumference"></span> mm</p>
         <p><strong>Hand Length:</strong> <span id="summary-length"></span> mm</p>
+        <p><strong>Hand Span:</strong> <span id="summary-span"></span> mm</p>
       </div>
     </div>
 
@@ -84,6 +85,7 @@ permalink: /preference
           </div>
           <p><strong>Study 1:</strong> Identified preferred holding positions. Diagonal position chosen by 77.4% of participants.</p>
           <p><strong>Study 2:</strong> Mapped finger-to-key preferences in diagonal position. Values range from 1 (most preferred) to 10 (least preferred).</p>
+          <p><strong>Hand data:</strong> Each participant's hand circumference, length, and span are recorded. The 3D model adapts: span controls key spacing, circumference &amp; length control the cube grip size.</p>
           <p><strong>Color scale:</strong> Green (high preference / low rank) → Yellow → Red (low preference / high rank).</p>
           <p><strong>Face orientation:</strong> Red (top), Blue &amp; Yellow (external), White &amp; Green (internal, facing body).</p>
         </div>

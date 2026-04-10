@@ -49,8 +49,14 @@ keycubeGroup.add(cube);
 // Key configuration
 const keySize = 0.15;
 const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize);
-const spacing = 0.20;
+const defaultSpacing = 0.20;
+let currentSpacing = defaultSpacing;
 const offset = 0.5;
+
+// Reference values (mean across 22 participants) for normalization
+const REF_CIRCUMFERENCE = 193.4; // mm (right hand mean)
+const REF_LENGTH = 181.7;         // mm (right hand mean)
+const REF_SPAN = 204.1;           // mm (right hand mean)
 
 const faces = [
   { axis: 'y', sign: 1, prefix: 'Y', color: 'yellow' },
@@ -112,11 +118,11 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       const keyIndex = i * 4 + j + 1;
       const keyID = `${prefix}${keyIndex}`;
       
-      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis: axis, sign: sign };
+      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis: axis, sign: sign, gridI: i, gridJ: j };
       key.name = keyID;
 
-      const u = (i - 1.5) * spacing;
-      const v = (j - 1.5) * spacing;
+      const u = (i - 1.5) * currentSpacing;
+      const v = (j - 1.5) * currentSpacing;
 
       if (axis === 'y') {
         key.position.set(u, offset * sign, v);
@@ -133,6 +139,7 @@ faces.forEach(({ axis, sign, prefix, color }) => {
 
       // Add text label flush on the key's outer surface
       const label = createTextLabel(keyID, axis, sign);
+      label.userData.parentKeyId = keyID; // link label to its parent key
       const labelLift = 0.078; // half key height + tiny gap to avoid z-fighting
       if (axis === 'y') {
         label.position.set(u, (offset + labelLift) * sign, v);
@@ -141,6 +148,7 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       } else {
         label.position.set(u, v, (offset + labelLift) * sign);
       }
+      label.userData.originalPosition = label.position.clone();
       keycubeGroup.add(label);
     }
   }
@@ -185,6 +193,7 @@ window.updateModel = function(data) {
   
   if (data.reset) {
     // Reset all colors, scales, and positions to original
+    currentSpacing = defaultSpacing;
     keycubeGroup.children.forEach(child => {
       if (child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
@@ -192,19 +201,69 @@ window.updateModel = function(data) {
         if (child.userData.originalPosition) {
           child.position.copy(child.userData.originalPosition);
         }
+      } else if (child.userData?.isLabel && child.userData.originalPosition) {
+        child.position.copy(child.userData.originalPosition);
       }
     });
+    // Reset cube scale
+    cube.scale.set(1, 1, 1);
     keycubeGroup.scale.setScalar(1);
     keycubeGroup.scale.x = 1;
     return;
   }
   
-  if (data.circumference || data.length) {
-    const circumferenceScale = data.circumference ? data.circumference / 200 : 1;
-    const lengthScale = data.length ? data.length / 185 : 1;
-    const scale = (circumferenceScale + lengthScale) / 2;
+  // ─── Hand dimensions → cube scale + key spacing ───
+  // Span controls key spacing (how far apart fingers can reach)
+  // Circumference/Length control the cube body scale (grip size)
+  if (data.circumference || data.length || data.span) {
+    // Scale the inner cube body based on circumference & length
+    const circScale = data.circumference ? data.circumference / REF_CIRCUMFERENCE : 1;
+    const lenScale = data.length ? data.length / REF_LENGTH : 1;
+    const bodyScale = (circScale + lenScale) / 2;
+    cube.scale.setScalar(bodyScale);
+
+    // Use span to adjust key spacing (finger spread → key spacing)
+    if (data.span) {
+      const spanScale = data.span / REF_SPAN;
+      currentSpacing = defaultSpacing * spanScale;
+    }
+
+    // Reposition all keys and labels with the new spacing
+    keycubeGroup.children.forEach(child => {
+      if (child === cube) return;
+      const ud = child.userData;
+      if (ud?.gridI !== undefined && ud?.gridJ !== undefined) {
+        // It's a key — reposition based on new spacing
+        const u = (ud.gridI - 1.5) * currentSpacing;
+        const v = (ud.gridJ - 1.5) * currentSpacing;
+        const off = offset; // keys stay on the surface of the unit cube
+        if (ud.axis === 'y') {
+          child.position.set(u, off * ud.sign, v);
+        } else if (ud.axis === 'x') {
+          child.position.set(off * ud.sign, u, v);
+        } else {
+          child.position.set(u, v, off * ud.sign);
+        }
+      } else if (ud?.isLabel && ud?.parentKeyId) {
+        // It's a label — reposition to follow its parent key
+        const parentKey = keycubeGroup.children.find(c => c.userData?.id === ud.parentKeyId);
+        if (parentKey) {
+          const labelLift = 0.078;
+          const pk = parentKey.userData;
+          if (pk.axis === 'y') {
+            child.position.set(parentKey.position.x, (offset + labelLift) * pk.sign, parentKey.position.z);
+          } else if (pk.axis === 'x') {
+            child.position.set((offset + labelLift) * pk.sign, parentKey.position.y, parentKey.position.z);
+          } else {
+            child.position.set(parentKey.position.x, parentKey.position.y, (offset + labelLift) * pk.sign);
+          }
+        }
+      }
+    });
+
+    // Preserve handedness mirror
     const currentScaleX = keycubeGroup.scale.x;
-    keycubeGroup.scale.setScalar(scale);
+    keycubeGroup.scale.setScalar(1);
     keycubeGroup.scale.x = currentScaleX;
   }
 
@@ -253,17 +312,10 @@ window.updateModel = function(data) {
         const value = heatmapData[child.userData.face][child.userData.index - 1];
         const normalized = Math.max(0, Math.min(1, (value - min) / range));
         child.material.color.set(heatmapColor(normalized, invert));
-
         child.scale.set(1, 1, 1);
-        if (child.userData.originalPosition) {
-          child.position.copy(child.userData.originalPosition);
-        }
       } else if (child !== cube && child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
         child.scale.set(1, 1, 1);
-        if (child.userData.originalPosition) {
-          child.position.copy(child.userData.originalPosition);
-        }
       }
     });
   }
@@ -280,9 +332,6 @@ window.updateModel = function(data) {
       if (!child.userData?.face || !child.userData?.index) return;
 
       child.scale.set(1, 1, 1);
-      if (child.userData.originalPosition) {
-        child.position.copy(child.userData.originalPosition);
-      }
 
       if (heatmapData[child.userData.face]) {
         const value = heatmapData[child.userData.face][child.userData.index - 1];

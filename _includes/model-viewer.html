@@ -60,9 +60,7 @@ const defaultSpacing = 0.20;
 let currentSpacing = defaultSpacing;
 const offset = 0.5;
 
-// Reference values (mean across 22 participants) for normalization
-const REF_CIRCUMFERENCE = 193.4; // mm (right hand mean)
-const REF_LENGTH = 181.7;         // mm (right hand mean)
+// Reference value (mean across 22 participants) for span normalization
 const REF_SPAN = 204.1;           // mm (right hand mean)
 
 // Face layout — matches the diagonal holding position (Figure 4 of the paper).
@@ -238,7 +236,6 @@ window.updateModel = function(data) {
       }
     });
     // Reset cube scale
-    cube.scale.set(1, 1, 1);
     keycubeGroup.scale.setScalar(1);
     keycubeGroup.scale.x = 1;
     // Preserve diagonal holding rotation (never reset it)
@@ -246,41 +243,27 @@ window.updateModel = function(data) {
     return;
   }
   
-  // ─── Hand dimensions → cube scale + key spacing ───
-  // Span controls key spacing (how far apart fingers can reach)
-  // Circumference/Length control the cube body scale (grip size)
-  if (data.circumference || data.length || data.span) {
-    // Scale the inner cube body based on circumference & length
-    const circScale = data.circumference ? data.circumference / REF_CIRCUMFERENCE : 1;
-    const lenScale = data.length ? data.length / REF_LENGTH : 1;
-    const bodyScale = (circScale + lenScale) / 2;
-    cube.scale.setScalar(bodyScale);
-
-    // Use span to adjust key spacing (finger spread → key spacing)
-    if (data.span) {
-      const spanScale = data.span / REF_SPAN;
-      currentSpacing = defaultSpacing * spanScale;
-    }
-
-    // Keys must sit on the SURFACE of the scaled cube body.
-    // The RoundedBoxGeometry is 1×1×1, so its half-extent is 0.5.
-    // After scaling the body by bodyScale, the surface is at 0.5 * bodyScale.
-    const scaledOffset = offset * bodyScale;
+  // ─── Hand span → key spacing ───
+  // The cube body has a fixed size (same physical keyboard for everyone).
+  // Only the span (finger spread) affects key spacing on the visualization.
+  if (data.span) {
+    const spanScale = data.span / REF_SPAN;
+    currentSpacing = defaultSpacing * spanScale;
 
     // Reposition all keys and labels with the new spacing
     keycubeGroup.children.forEach(child => {
       if (child === cube) return;
       const ud = child.userData;
       if (ud?.gridI !== undefined && ud?.gridJ !== undefined) {
-        // It's a key — reposition based on new spacing + scaled surface
+        // It's a key — reposition based on new spacing
         const u = (ud.gridI - 1.5) * currentSpacing;
         const v = (ud.gridJ - 1.5) * currentSpacing;
         if (ud.axis === 'y') {
-          child.position.set(u, scaledOffset * ud.sign, v);
+          child.position.set(u, offset * ud.sign, v);
         } else if (ud.axis === 'x') {
-          child.position.set(scaledOffset * ud.sign, u, v);
+          child.position.set(offset * ud.sign, u, v);
         } else {
-          child.position.set(u, v, scaledOffset * ud.sign);
+          child.position.set(u, v, offset * ud.sign);
         }
       } else if (ud?.isLabel && ud?.parentKeyId) {
         // It's a label — reposition to follow its parent key
@@ -289,20 +272,15 @@ window.updateModel = function(data) {
           const labelLift = 0.078;
           const pk = parentKey.userData;
           if (pk.axis === 'y') {
-            child.position.set(parentKey.position.x, (scaledOffset + labelLift) * pk.sign, parentKey.position.z);
+            child.position.set(parentKey.position.x, (offset + labelLift) * pk.sign, parentKey.position.z);
           } else if (pk.axis === 'x') {
-            child.position.set((scaledOffset + labelLift) * pk.sign, parentKey.position.y, parentKey.position.z);
+            child.position.set((offset + labelLift) * pk.sign, parentKey.position.y, parentKey.position.z);
           } else {
-            child.position.set(parentKey.position.x, parentKey.position.y, (scaledOffset + labelLift) * pk.sign);
+            child.position.set(parentKey.position.x, parentKey.position.y, (offset + labelLift) * pk.sign);
           }
         }
       }
     });
-
-    // Preserve handedness mirror
-    const currentScaleX = keycubeGroup.scale.x;
-    keycubeGroup.scale.setScalar(1);
-    keycubeGroup.scale.x = currentScaleX;
   }
 
   if (data.wireframe !== undefined) {

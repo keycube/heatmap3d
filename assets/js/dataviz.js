@@ -129,12 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
           });
           window.updateModel({
             handedness: currentParticipant.handedness,
-            circumference: currentParticipant.circumferenceRight,
-            length: currentParticipant.lengthRight,
-            span: currentParticipant.spanRight,
-            circumferenceLeft: currentParticipant.circumferenceLeft,
-            lengthLeft: currentParticipant.lengthLeft,
-            spanLeft: currentParticipant.spanLeft
+            span: currentParticipant.spanRight
           });
         }
         // Update summary panel

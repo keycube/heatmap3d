@@ -128,8 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
             reset: true
           });
           window.updateModel({
-            handedness: currentParticipant.handedness,
-            span: currentParticipant.spanRight
+            handedness: currentParticipant.handedness
           });
         }
         // Update summary panel

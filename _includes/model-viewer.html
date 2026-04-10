@@ -56,12 +56,8 @@ keycubeGroup.add(cube);
 // Key configuration
 const keySize = 0.15;
 const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize);
-const defaultSpacing = 0.20;
-let currentSpacing = defaultSpacing;
+const spacing = 0.20;
 const offset = 0.5;
-
-// Reference value (mean across 22 participants) for span normalization
-const REF_SPAN = 204.1;           // mm (right hand mean)
 
 // Face layout — matches the diagonal holding position (Figure 4 of the paper).
 // The cube is rotated 45° around Y so from the camera the two front
@@ -138,8 +134,8 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis: axis, sign: sign, gridI: i, gridJ: j };
       key.name = keyID;
 
-      const u = (i - 1.5) * currentSpacing;
-      const v = (j - 1.5) * currentSpacing;
+      const u = (i - 1.5) * spacing;
+      const v = (j - 1.5) * spacing;
 
       if (axis === 'y') {
         key.position.set(u, offset * sign, v);
@@ -222,8 +218,7 @@ window.updateModel = function(data) {
   }
   
   if (data.reset) {
-    // Reset all colors, scales, and positions to original
-    currentSpacing = defaultSpacing;
+    // Reset all colors and positions to original
     keycubeGroup.children.forEach(child => {
       if (child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
@@ -243,46 +238,6 @@ window.updateModel = function(data) {
     return;
   }
   
-  // ─── Hand span → key spacing ───
-  // The cube body has a fixed size (same physical keyboard for everyone).
-  // Only the span (finger spread) affects key spacing on the visualization.
-  if (data.span) {
-    const spanScale = data.span / REF_SPAN;
-    currentSpacing = defaultSpacing * spanScale;
-
-    // Reposition all keys and labels with the new spacing
-    keycubeGroup.children.forEach(child => {
-      if (child === cube) return;
-      const ud = child.userData;
-      if (ud?.gridI !== undefined && ud?.gridJ !== undefined) {
-        // It's a key — reposition based on new spacing
-        const u = (ud.gridI - 1.5) * currentSpacing;
-        const v = (ud.gridJ - 1.5) * currentSpacing;
-        if (ud.axis === 'y') {
-          child.position.set(u, offset * ud.sign, v);
-        } else if (ud.axis === 'x') {
-          child.position.set(offset * ud.sign, u, v);
-        } else {
-          child.position.set(u, v, offset * ud.sign);
-        }
-      } else if (ud?.isLabel && ud?.parentKeyId) {
-        // It's a label — reposition to follow its parent key
-        const parentKey = keycubeGroup.children.find(c => c.userData?.id === ud.parentKeyId);
-        if (parentKey) {
-          const labelLift = 0.078;
-          const pk = parentKey.userData;
-          if (pk.axis === 'y') {
-            child.position.set(parentKey.position.x, (offset + labelLift) * pk.sign, parentKey.position.z);
-          } else if (pk.axis === 'x') {
-            child.position.set((offset + labelLift) * pk.sign, parentKey.position.y, parentKey.position.z);
-          } else {
-            child.position.set(parentKey.position.x, parentKey.position.y, (offset + labelLift) * pk.sign);
-          }
-        }
-      }
-    });
-  }
-
   if (data.wireframe !== undefined) {
     scene.traverse(function (child) {
         if (child.isMesh && !child.userData?.isLabel) {

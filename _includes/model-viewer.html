@@ -262,21 +262,25 @@ window.updateModel = function(data) {
       currentSpacing = defaultSpacing * spanScale;
     }
 
+    // Keys must sit on the SURFACE of the scaled cube body.
+    // The RoundedBoxGeometry is 1×1×1, so its half-extent is 0.5.
+    // After scaling the body by bodyScale, the surface is at 0.5 * bodyScale.
+    const scaledOffset = offset * bodyScale;
+
     // Reposition all keys and labels with the new spacing
     keycubeGroup.children.forEach(child => {
       if (child === cube) return;
       const ud = child.userData;
       if (ud?.gridI !== undefined && ud?.gridJ !== undefined) {
-        // It's a key — reposition based on new spacing
+        // It's a key — reposition based on new spacing + scaled surface
         const u = (ud.gridI - 1.5) * currentSpacing;
         const v = (ud.gridJ - 1.5) * currentSpacing;
-        const off = offset; // keys stay on the surface of the unit cube
         if (ud.axis === 'y') {
-          child.position.set(u, off * ud.sign, v);
+          child.position.set(u, scaledOffset * ud.sign, v);
         } else if (ud.axis === 'x') {
-          child.position.set(off * ud.sign, u, v);
+          child.position.set(scaledOffset * ud.sign, u, v);
         } else {
-          child.position.set(u, v, off * ud.sign);
+          child.position.set(u, v, scaledOffset * ud.sign);
         }
       } else if (ud?.isLabel && ud?.parentKeyId) {
         // It's a label — reposition to follow its parent key
@@ -285,11 +289,11 @@ window.updateModel = function(data) {
           const labelLift = 0.078;
           const pk = parentKey.userData;
           if (pk.axis === 'y') {
-            child.position.set(parentKey.position.x, (offset + labelLift) * pk.sign, parentKey.position.z);
+            child.position.set(parentKey.position.x, (scaledOffset + labelLift) * pk.sign, parentKey.position.z);
           } else if (pk.axis === 'x') {
-            child.position.set((offset + labelLift) * pk.sign, parentKey.position.y, parentKey.position.z);
+            child.position.set((scaledOffset + labelLift) * pk.sign, parentKey.position.y, parentKey.position.z);
           } else {
-            child.position.set(parentKey.position.x, parentKey.position.y, (offset + labelLift) * pk.sign);
+            child.position.set(parentKey.position.x, parentKey.position.y, (scaledOffset + labelLift) * pk.sign);
           }
         }
       }

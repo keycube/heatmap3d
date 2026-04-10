@@ -18,9 +18,9 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color('#ffffff');
 
 // ─── Camera ───
-// Positioned to show the cube at a pleasant 3/4 angle
+// Slightly above center, face-on view so the cube appears flat
 const camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(2.5, 3, 4.5);
+camera.position.set(0, 2, 5);
 
 // ─── Renderer ───
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -38,6 +38,9 @@ controls.enableZoom = false;      // Disable zoom to keep the composition stable
 controls.enablePan = false;       // Disable pan to keep the cube centered
 controls.autoRotate = true;       // Gentle auto-rotation for visual appeal
 controls.autoRotateSpeed = 0.8;   // Slow speed for elegance
+// Lock vertical tilt — cube always stays flat
+controls.minPolarAngle = Math.PI / 6;
+controls.maxPolarAngle = Math.PI / 2.5;
 
 // ─── Lighting ───
 // Subtle lighting to give depth to the wireframe
@@ -132,8 +135,8 @@ faces.forEach(({ axis, sign, prefix, color }) => {
 // Flat horizontal, rotated 45° around vertical axis (diamond shape from above)
 keycubeGroup.rotation.y = Math.PI / 4;
 
-// Pivot on the 6th face (bottom, no keys) at y = -0.5
-controls.target.set(0, -0.5, 0);
+// Orbit pivot at cube center, vertical tilt locked above
+controls.target.set(0, 0, 0);
 
 scene.add(keycubeGroup);
 

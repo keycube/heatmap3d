@@ -7,10 +7,10 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#ffffff');
 
-// Camera — positioned above and in front to see the Red (top) face
-// clearly, with the diagonal rotation showing the diamond shape.
+// Camera — slightly above center, looking at the cube face-on.
+// Just enough elevation to see the Red (top) face and the sides.
 const camera = new THREE.PerspectiveCamera(25, 1, 0.1, 1000);
-camera.position.set(2.5, 3, 4);
+camera.position.set(0, 2, 5);
 const initialCameraPosition = camera.position.clone();
 
 // Renderer
@@ -30,6 +30,13 @@ camera.updateProjectionMatrix();
 // Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
+// Lock vertical (polar) rotation so the cube always stays flat.
+// User can rotate horizontally (azimuth) freely but cannot flip
+// the cube upside-down or view it from below.
+// Polar angle 0 = top-down, π/2 = horizon, π = bottom-up.
+// We allow a narrow band around the initial 3/4 view angle.
+controls.minPolarAngle = Math.PI / 6;   // ~30° — slight top-down
+controls.maxPolarAngle = Math.PI / 2.5; // ~72° — never below horizon
 
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -167,12 +174,10 @@ faces.forEach(({ axis, sign, prefix, color }) => {
 // Red face is on top, 6th face (no keys) is on the bottom.
 keycubeGroup.rotation.y = Math.PI / 4;  // 45° around vertical axis
 
-// ─── Pivot point on the 6th face (bottom, no keys) ───
-// The face without keys is at y = -0.5 in local space.
-// We set the orbit target there so all rotation orbits around
-// the bottom face — the physical resting/grip point of the device.
-const pivotPoint = new THREE.Vector3(0, -0.5, 0);
-controls.target.copy(pivotPoint);
+// ─── Orbit pivot ───
+// Target = cube center. The user can spin the cube around itself
+// horizontally, but vertical tilt is locked (see polar angle limits).
+controls.target.set(0, 0, 0);
 const initialControlsTarget = controls.target.clone();
 controls.saveState();
 

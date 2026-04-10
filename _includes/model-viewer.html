@@ -66,18 +66,21 @@ const REF_LENGTH = 181.7;         // mm (right hand mean)
 const REF_SPAN = 204.1;           // mm (right hand mean)
 
 // Face layout — matches the diagonal holding position (Figure 4 of the paper).
-// The 6th face (y-1, bottom) has no keys and serves as the pivot corner.
-//   R (Red)    → y+1 (top)        — shared by both thumbs
-//   B (Blue)   → x-1 (left ext.)  — left hand fingers wrap around
-//   Y (Yellow) → x+1 (right ext.) — right hand fingers wrap around
-//   W (White)  → z-1 (left int.)  — faces the body, left side
-//   G (Green)  → z+1 (right int.) — faces the body, right side
+// The cube is rotated 45° around Y so from the camera the two front
+// diagonal faces are:  front-left = x-1,  front-right = z+1.
+// The 6th face (y-1, bottom) has no keys.
+//
+//   R (Red)    → y+1 (top)         — shared by both thumbs
+//   B (Blue)   → x-1 (front-left)  — under left hand
+//   Y (Yellow) → z+1 (front-right) — under right hand
+//   W (White)  → z-1 (back-left)   — next to Blue
+//   G (Green)  → x+1 (back-right)  — next to Yellow
 const faces = [
   { axis: 'y', sign: 1,  prefix: 'R', color: 'red' },
   { axis: 'x', sign: -1, prefix: 'B', color: 'blue' },
-  { axis: 'x', sign: 1,  prefix: 'Y', color: 'yellow' },
+  { axis: 'z', sign: 1,  prefix: 'Y', color: 'yellow' },
   { axis: 'z', sign: -1, prefix: 'W', color: 'white' },
-  { axis: 'z', sign: 1,  prefix: 'G', color: 'green' }
+  { axis: 'x', sign: 1,  prefix: 'G', color: 'green' }
 ];
 
 // Create text label as a small plane decal stuck on the key surface
@@ -311,7 +314,9 @@ window.updateModel = function(data) {
   if (data.resetView) {
     camera.position.copy(initialCameraPosition);
     controls.target.copy(initialControlsTarget);
-    controls.reset();
+    camera.zoom = 1;
+    camera.updateProjectionMatrix();
+    controls.update();
   }
 
   if (data.lightingIntensity !== undefined) {

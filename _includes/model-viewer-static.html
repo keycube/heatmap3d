@@ -86,17 +86,17 @@ const offset = 0.5;
 
 // Face layout — matches the diagonal holding position (Figure 4 of the paper).
 // The 6th face (y-1, bottom) has no keys.
-//   R (Red)    → y+1 (top)        — shared by both thumbs
-//   B (Blue)   → x-1 (left ext.)  — left hand fingers wrap around
-//   Y (Yellow) → x+1 (right ext.) — right hand fingers wrap around
-//   W (White)  → z-1 (left int.)  — faces the body, left side
-//   G (Green)  → z+1 (right int.) — faces the body, right side
+//   R (Red)    → y+1 (top)         — shared by both thumbs
+//   B (Blue)   → x-1 (front-left)  — under left hand
+//   Y (Yellow) → z+1 (front-right) — under right hand
+//   W (White)  → z-1 (back-left)   — next to Blue
+//   G (Green)  → x+1 (back-right)  — next to Yellow
 const faces = [
   { axis: 'y', sign: 1,  prefix: 'R', color: '#ff6b6b' },  // Red - top
-  { axis: 'x', sign: -1, prefix: 'B', color: '#4dabf7' },  // Blue - left ext.
-  { axis: 'x', sign: 1,  prefix: 'Y', color: '#ffd43b' },  // Yellow - right ext.
-  { axis: 'z', sign: -1, prefix: 'W', color: '#f8f9fa' },  // White - left int.
-  { axis: 'z', sign: 1,  prefix: 'G', color: '#51cf66' }   // Green - right int.
+  { axis: 'x', sign: -1, prefix: 'B', color: '#4dabf7' },  // Blue - front-left
+  { axis: 'z', sign: 1,  prefix: 'Y', color: '#ffd43b' },  // Yellow - front-right
+  { axis: 'z', sign: -1, prefix: 'W', color: '#f8f9fa' },  // White - back-left
+  { axis: 'x', sign: 1,  prefix: 'G', color: '#51cf66' }   // Green - back-right
 ];
 
 // Create wireframe keys on each face

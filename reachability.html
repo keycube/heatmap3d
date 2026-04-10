@@ -7,174 +7,132 @@ permalink: /reachability
 
 <a href="{{ site.baseurl }}/" class="nav-link">← Home</a>
 
-<div class="main-container">
-  <div id="controls">
+<!-- Full-screen 3D viewer -->
+<div id="model-container"></div>
 
-    <!-- Holding Position Context -->
-    <div class="controls-section active">
-      <h3>Diagonal Holding Position</h3>
-      <div class="section-content" style="display: block;">
-        <div class="holding-diagram">
-          <div class="holding-info-text">
-            Preferred by <strong>77.4%</strong> of participants. The cube is held diagonally with both hands, thumbs on top.
+<!-- Floating overlay controls -->
+<div class="overlay-controls">
+
+  <!-- ── Top bar: hand selector + quick actions ── -->
+  <div class="top-bar">
+    <div class="glass-panel" style="padding: 8px 14px;">
+      <div class="hand-selector-container">
+        <!-- Left Hand -->
+        <div class="hand-analog" id="left-hand-analog">
+          <div class="analog-label">Left</div>
+          <div class="analog-ring" data-hand="left">
+            <div class="analog-stick"><span class="hand-emoji">🤚</span></div>
+            <button class="finger-dot finger-thumb-left" data-finger="LT" data-tooltip="Left Thumb"><span class="finger-letter">T</span></button>
+            <button class="finger-dot finger-index-left" data-finger="LI" data-tooltip="Left Index"><span class="finger-letter">I</span></button>
+            <button class="finger-dot finger-middle-left" data-finger="LM" data-tooltip="Left Middle"><span class="finger-letter">M</span></button>
+            <button class="finger-dot finger-ring-left" data-finger="LR" data-tooltip="Left Ring"><span class="finger-letter">R</span></button>
+            <button class="finger-dot finger-little-left" data-finger="LL" data-tooltip="Left Little"><span class="finger-letter">L</span></button>
           </div>
-          <div class="hand-face-map">
-            <div class="hand-face-card left-card">
-              <div class="hand-face-title">🤚 Left Hand</div>
-              <div class="face-tags">
-                <span class="face-tag" style="background:#4dabf7;color:#fff;">Blue (ext.)</span>
-                <span class="face-tag" style="background:#f8f9fa;color:#333;border:1px solid #ccc;">White (int.)</span>
-                <span class="face-tag half-tag" style="background:#ff6b6b;color:#fff;">Red ½ left</span>
-              </div>
-            </div>
-            <div class="hand-face-card right-card">
-              <div class="hand-face-title">Right Hand 🤚</div>
-              <div class="face-tags">
-                <span class="face-tag" style="background:#ffd43b;color:#333;">Yellow (ext.)</span>
-                <span class="face-tag" style="background:#51cf66;color:#fff;">Green (int.)</span>
-                <span class="face-tag half-tag" style="background:#ff6b6b;color:#fff;">Red ½ right</span>
-              </div>
-            </div>
+        </div>
+        <div class="hand-divider"><span>or</span></div>
+        <!-- Right Hand -->
+        <div class="hand-analog" id="right-hand-analog">
+          <div class="analog-label">Right</div>
+          <div class="analog-ring" data-hand="right">
+            <div class="analog-stick"><span class="hand-emoji">🤚</span></div>
+            <button class="finger-dot finger-thumb-right" data-finger="RT" data-tooltip="Right Thumb"><span class="finger-letter">T</span></button>
+            <button class="finger-dot finger-index-right" data-finger="RI" data-tooltip="Right Index"><span class="finger-letter">I</span></button>
+            <button class="finger-dot finger-middle-right" data-finger="RM" data-tooltip="Right Middle"><span class="finger-letter">M</span></button>
+            <button class="finger-dot finger-ring-right" data-finger="RR" data-tooltip="Right Ring"><span class="finger-letter">R</span></button>
+            <button class="finger-dot finger-little-right" data-finger="RL" data-tooltip="Right Little"><span class="finger-letter">L</span></button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Hand & Finger Selector -->
-    <div class="controls-section active">
-      <h3>Hand &amp; Finger Selection</h3>
-      <div class="section-content" style="display: block;">
-        <div id="mode-description">Select a hand to view its finger reachability on the cube. Then tap a specific finger for detailed data.</div>
-
-        <div class="hand-selector-container">
-          <!-- Left Hand Analog -->
-          <div class="hand-analog" id="left-hand-analog">
-            <div class="analog-label">Left Hand</div>
-            <div class="analog-ring" data-hand="left">
-              <div class="analog-stick">
-                <span class="hand-emoji">🤚</span>
-              </div>
-              <button class="finger-dot finger-thumb-left" data-finger="LT" data-tooltip="Left Thumb → Red (top half)">
-                <span class="finger-letter">T</span>
-              </button>
-              <button class="finger-dot finger-index-left" data-finger="LI" data-tooltip="Left Index → Blue (top rows)">
-                <span class="finger-letter">I</span>
-              </button>
-              <button class="finger-dot finger-middle-left" data-finger="LM" data-tooltip="Left Middle → Blue (mid rows)">
-                <span class="finger-letter">M</span>
-              </button>
-              <button class="finger-dot finger-ring-left" data-finger="LR" data-tooltip="Left Ring → Blue (lower rows)">
-                <span class="finger-letter">R</span>
-              </button>
-              <button class="finger-dot finger-little-left" data-finger="LL" data-tooltip="Left Little → Blue (bottom only)">
-                <span class="finger-letter">L</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Divider -->
-          <div class="hand-divider"><span>or</span></div>
-
-          <!-- Right Hand Analog -->
-          <div class="hand-analog" id="right-hand-analog">
-            <div class="analog-label">Right Hand</div>
-            <div class="analog-ring" data-hand="right">
-              <div class="analog-stick">
-                <span class="hand-emoji">🤚</span>
-              </div>
-              <button class="finger-dot finger-thumb-right" data-finger="RT" data-tooltip="Right Thumb → Red (top half)">
-                <span class="finger-letter">T</span>
-              </button>
-              <button class="finger-dot finger-index-right" data-finger="RI" data-tooltip="Right Index → Yellow (top rows)">
-                <span class="finger-letter">I</span>
-              </button>
-              <button class="finger-dot finger-middle-right" data-finger="RM" data-tooltip="Right Middle → Yellow (mid rows)">
-                <span class="finger-letter">M</span>
-              </button>
-              <button class="finger-dot finger-ring-right" data-finger="RR" data-tooltip="Right Ring → Yellow (lower rows)">
-                <span class="finger-letter">R</span>
-              </button>
-              <button class="finger-dot finger-little-right" data-finger="RL" data-tooltip="Right Little → Yellow (bottom only)">
-                <span class="finger-letter">L</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick actions -->
-        <div class="hand-actions">
-          <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="Show combined reachability for all fingers">All Fingers</button>
-          <button class="hand-action-btn" id="btn-left-all" data-tooltip="Show all left hand fingers combined">Left All</button>
-          <button class="hand-action-btn" id="btn-right-all" data-tooltip="Show all right hand fingers combined">Right All</button>
-        </div>
-
-        <!-- Hidden select kept for dataviz.js compatibility -->
-        <select class="finger-select" id="finger-select" style="display:none;">
-          <option value="total">All Fingers (Total)</option>
-          <option value="LT">Left Thumb</option>
-          <option value="LI">Left Index</option>
-          <option value="LM">Left Middle</option>
-          <option value="LR">Left Ring</option>
-          <option value="LL">Left Little</option>
-          <option value="RT">Right Thumb</option>
-          <option value="RI">Right Index</option>
-          <option value="RM">Right Middle</option>
-          <option value="RR">Right Ring</option>
-          <option value="RL">Right Little</option>
-        </select>
-      </div>
+    <div class="hand-actions">
+      <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="All fingers combined">All</button>
+      <button class="hand-action-btn" id="btn-left-all" data-tooltip="Left hand combined">Left</button>
+      <button class="hand-action-btn" id="btn-right-all" data-tooltip="Right hand combined">Right</button>
     </div>
-
-    <!-- Active Selection + Legend -->
-    <div class="controls-section active" id="active-selection-panel">
-      <h3>Active Selection</h3>
-      <div class="section-content" style="display: block;">
-        <div class="active-selection-display">
-          <div class="selection-badge" id="selection-badge">
-            <span class="selection-icon">🖐️</span>
-            <span class="selection-text" id="selection-text">All Fingers (Total)</span>
-          </div>
-        </div>
-        <div class="finger-context" id="finger-context">
-          Combined reachability across all 10 fingers and 22 participants.
-        </div>
-        <div class="heatmap-legend">
-          <span>Unreachable (0)</span>
-          <div class="heatmap-gradient"></div>
-          <span>Easily reachable (3)</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Study Info -->
-    <div class="controls-section">
-      <h3>Study Info</h3>
-      <div class="section-content">
-        <div class="study-info">
-          <div class="study-stat-grid">
-            <div class="study-stat-item"><strong>22</strong>Participants</div>
-            <div class="study-stat-item"><strong>80</strong>Keys (5 faces)</div>
-            <div class="study-stat-item"><strong>10</strong>Fingers mapped</div>
-            <div class="study-stat-item"><strong>3-point</strong>Scale</div>
-          </div>
-          <p><strong>Scoring:</strong> Each key scored per finger: <strong>3</strong> = easily reachable, <strong>1</strong> = reachable with effort, <strong>0</strong> = unreachable.</p>
-          <p><strong>Data shown:</strong> Sum across all 22 participants. Maximum possible score per key per finger = 3 × 22 = 66.</p>
-          <p><strong>Holding position:</strong> Diagonal hold (77.4% preferred). Both hands grip opposite corners, thumbs on top (Red face), other fingers wrap around external faces (Blue/Yellow).</p>
-          <p><strong>Face orientation:</strong> Red (top, shared), Blue (left external), Yellow (right external), White (left internal), Green (right internal).</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Scene -->
-    <div class="controls-section">
-      <h3>Scene</h3>
-      <div class="section-content">
-        <button class="scene-btn" id="reset-view-btn" data-tooltip="Reset camera to default position">Reset View</button>
-      </div>
-    </div>
-
   </div>
-  <div id="model-container"></div>
+
+  <!-- ── Bottom bar: badge + finger context + legend + reset ── -->
+  <div class="bottom-bar">
+    <div class="selection-badge" id="selection-badge">
+      <span class="selection-icon">🖐️</span>
+      <span class="selection-text" id="selection-text">All Fingers (Total)</span>
+    </div>
+
+    <div class="finger-context" id="finger-context">
+      Combined reachability across all 10 fingers and 22 participants.
+    </div>
+
+    <div class="heatmap-legend">
+      <span>Unreachable (0)</span>
+      <div class="heatmap-gradient"></div>
+      <span>Reachable (3)</span>
+    </div>
+
+    <button class="reset-view-btn" id="reset-view-btn">↻ Reset View</button>
+  </div>
+
+</div>
+
+<!-- Hidden select for dataviz.js compatibility -->
+<select class="finger-select" id="finger-select" style="display:none;">
+  <option value="total">All Fingers (Total)</option>
+  <option value="LT">Left Thumb</option>
+  <option value="LI">Left Index</option>
+  <option value="LM">Left Middle</option>
+  <option value="LR">Left Ring</option>
+  <option value="LL">Left Little</option>
+  <option value="RT">Right Thumb</option>
+  <option value="RI">Right Index</option>
+  <option value="RM">Right Middle</option>
+  <option value="RR">Right Ring</option>
+  <option value="RL">Right Little</option>
+</select>
+
+<!-- Side panel toggle -->
+<button class="side-panel-toggle" onclick="document.getElementById('info-panel').classList.toggle('hidden')">ℹ️ Info</button>
+
+<!-- Side panel -->
+<div id="info-panel" class="side-panel glass-panel hidden">
+
+  <h4>Holding Position</h4>
+  <div class="holding-diagram">
+    <div class="holding-info-text">
+      Preferred by <strong>77.4%</strong> of participants. Cube held diagonally, thumbs on top.
+    </div>
+    <div class="hand-face-map">
+      <div class="hand-face-card">
+        <div class="hand-face-title">🤚 Left</div>
+        <div class="face-tags">
+          <span class="face-tag" style="background:#4dabf7;color:#fff;">Blue</span>
+          <span class="face-tag" style="background:#f8f9fa;color:#333;border:1px solid #ccc;">White</span>
+          <span class="face-tag half-tag" style="background:#ff6b6b;color:#fff;">Red ½</span>
+        </div>
+      </div>
+      <div class="hand-face-card">
+        <div class="hand-face-title">Right ��</div>
+        <div class="face-tags">
+          <span class="face-tag" style="background:#ffd43b;color:#333;">Yellow</span>
+          <span class="face-tag" style="background:#51cf66;color:#fff;">Green</span>
+          <span class="face-tag half-tag" style="background:#ff6b6b;color:#fff;">Red ½</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4>Study Info</h4>
+  <div class="study-info">
+    <div class="study-stat-grid">
+      <div class="study-stat-item"><strong>22</strong>Participants</div>
+      <div class="study-stat-item"><strong>80</strong>Keys</div>
+      <div class="study-stat-item"><strong>10</strong>Fingers</div>
+      <div class="study-stat-item"><strong>3-pt</strong>Scale</div>
+    </div>
+    <p><strong>Scoring:</strong> 3 = easily reachable, 1 = with effort, 0 = unreachable.</p>
+    <p><strong>Data:</strong> Sum across 22 participants. Max per key per finger = 66.</p>
+    <p><strong>Faces:</strong> Red (top, shared), Blue (left ext.), Yellow (right ext.), White (left int.), Green (right int.).</p>
+  </div>
+
 </div>
 
 <script>
@@ -197,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'LR': 'Left Ring', 'LL': 'Left Little',
     'RT': 'Right Thumb', 'RI': 'Right Index', 'RM': 'Right Middle',
     'RR': 'Right Ring', 'RL': 'Right Little',
-    'left-all': 'Left Hand (All fingers)', 'right-all': 'Right Hand (All fingers)'
+    'left-all': 'Left Hand (All)', 'right-all': 'Right Hand (All)'
   };
 
   var fingerIcons = {
@@ -210,16 +168,16 @@ document.addEventListener('DOMContentLoaded', function () {
     'total': 'Combined reachability across all 10 fingers and 22 participants.',
     'left-all': 'Left hand covers Blue (external), White (internal), and left half of Red (top).',
     'right-all': 'Right hand covers Yellow (external), Green (internal), and right half of Red (top).',
-    'LT': 'Left Thumb — widest reach on the left side. Covers the left half of the Red (top) face and edges of Blue & White.',
-    'LI': 'Left Index — upper rows of the Blue face (external). Limited reach on other faces.',
-    'LM': 'Left Middle — middle rows of the Blue face. Some reach on White (internal).',
-    'LR': 'Left Ring — lower rows of the Blue face. Very limited overall reach.',
-    'LL': 'Left Little — reaches only the bottom corner of Blue (B1) and edge keys. Most restricted finger.',
-    'RT': 'Right Thumb — widest reach on the right side. Covers the right half of the Red (top) face and edges of Yellow & Green.',
-    'RI': 'Right Index — upper rows of the Yellow face (external). Limited reach on other faces.',
-    'RM': 'Right Middle — middle rows of the Yellow face. Some reach on Green (internal).',
-    'RR': 'Right Ring — lower rows of the Yellow face. Very limited overall reach.',
-    'RL': 'Right Little — reaches only the bottom corner of Yellow (Y16) and edge keys. Most restricted finger.'
+    'LT': 'Left Thumb — widest reach on the left side. Covers left half of Red (top) and edges of Blue & White.',
+    'LI': 'Left Index — upper rows of Blue face (external).',
+    'LM': 'Left Middle — middle rows of Blue face. Some reach on White.',
+    'LR': 'Left Ring — lower rows of Blue face. Very limited reach.',
+    'LL': 'Left Little — bottom corner of Blue only. Most restricted finger.',
+    'RT': 'Right Thumb — widest reach on right side. Covers right half of Red (top) and edges of Yellow & Green.',
+    'RI': 'Right Index — upper rows of Yellow face (external).',
+    'RM': 'Right Middle — middle rows of Yellow face. Some reach on Green.',
+    'RR': 'Right Ring — lower rows of Yellow face. Very limited reach.',
+    'RL': 'Right Little — bottom corner of Yellow only. Most restricted finger.'
   };
 
   function updateSelection(fingerValue) {
@@ -228,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
       fingerSelect.dispatchEvent(new Event('change'));
     }
     if (selectionText) selectionText.textContent = fingerNames[fingerValue] || fingerValue;
-    if (selectionIcon) selectionIcon.textContent = fingerIcons[fingerValue] || '🖐️';
+    if (selectionIcon) selectionIcon.textContent = fingerIcons[fingerValue] || '��️';
     if (fingerContext) fingerContext.textContent = fingerContextInfo[fingerValue] || '';
 
     allFingerDots.forEach(function (dot) {

@@ -20,7 +20,7 @@ scene.background = new THREE.Color('#ffffff');
 // ─── Camera ───
 // Positioned to show the cube at a pleasant 3/4 angle
 const camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(2.5, 2, 4.5);
+camera.position.set(2.5, 3, 4.5);
 
 // ─── Renderer ───
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -128,14 +128,12 @@ faces.forEach(({ axis, sign, prefix, color }) => {
   }
 });
 
-// ─── Diagonal holding position ───
-// Rotate so one corner points down, matching preferred hold (Figure 4)
-const diagAngle = Math.atan(1 / Math.sqrt(2)); // ≈ 35.26°
-keycubeGroup.rotation.z = Math.PI / 4;
-keycubeGroup.rotation.x = diagAngle;
+// ─── Diagonal holding position (Figure 4, left photo) ───
+// Flat horizontal, rotated 45° around vertical axis (diamond shape from above)
+keycubeGroup.rotation.y = Math.PI / 4;
 
-// Pivot: orbit around the cube center
-controls.target.set(0, 0, 0);
+// Pivot on the 6th face (bottom, no keys) at y = -0.5
+controls.target.set(0, -0.5, 0);
 
 scene.add(keycubeGroup);
 

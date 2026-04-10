@@ -85,18 +85,20 @@ const spacing = 0.20;
 const offset = 0.5;
 
 // Face layout — matches the diagonal holding position (Figure 4 of the paper).
+// The USER stands BEHIND the cube, so their left/right is mirrored
+// relative to the camera.
 // The 6th face (y-1, bottom) has no keys.
 //   R (Red)    → y+1 (top)         — shared by both thumbs
-//   B (Blue)   → x-1 (front-left)  — under left hand
-//   Y (Yellow) → z+1 (front-right) — under right hand
-//   W (White)  → z-1 (back-left)   — next to Blue
-//   G (Green)  → x+1 (back-right)  — next to Yellow
+//   B (Blue)   → z+1 (front-right) — user's left hand
+//   Y (Yellow) → x-1 (front-left)  — user's right hand
+//   W (White)  → x+1 (back-right)  — next to Blue
+//   G (Green)  → z-1 (back-left)   — next to Yellow
 const faces = [
   { axis: 'y', sign: 1,  prefix: 'R', color: '#ff6b6b' },  // Red - top
-  { axis: 'x', sign: -1, prefix: 'B', color: '#4dabf7' },  // Blue - front-left
-  { axis: 'z', sign: 1,  prefix: 'Y', color: '#ffd43b' },  // Yellow - front-right
-  { axis: 'z', sign: -1, prefix: 'W', color: '#f8f9fa' },  // White - back-left
-  { axis: 'x', sign: 1,  prefix: 'G', color: '#51cf66' }   // Green - back-right
+  { axis: 'z', sign: 1,  prefix: 'B', color: '#4dabf7' },  // Blue - user's left
+  { axis: 'x', sign: -1, prefix: 'Y', color: '#ffd43b' },  // Yellow - user's right
+  { axis: 'x', sign: 1,  prefix: 'W', color: '#f8f9fa' },  // White - next to Blue
+  { axis: 'z', sign: -1, prefix: 'G', color: '#51cf66' }   // Green - next to Yellow
 ];
 
 // Create wireframe keys on each face

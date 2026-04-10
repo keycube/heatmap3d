@@ -81,13 +81,19 @@ const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize);
 const spacing = 0.20;
 const offset = 0.5;
 
-// Face definitions matching the dataviz keycube model
+// Face layout — matches the diagonal holding position (Figure 4 of the paper).
+// The 6th face (y-1, bottom) has no keys.
+//   R (Red)    → y+1 (top)        — shared by both thumbs
+//   B (Blue)   → x-1 (left ext.)  — left hand fingers wrap around
+//   Y (Yellow) → x+1 (right ext.) — right hand fingers wrap around
+//   W (White)  → z-1 (left int.)  — faces the body, left side
+//   G (Green)  → z+1 (right int.) — faces the body, right side
 const faces = [
-  { axis: 'y', sign: 1,  prefix: 'Y', color: '#ffd43b' },  // Yellow - top
-  { axis: 'y', sign: -1, prefix: 'W', color: '#f8f9fa' },  // White - bottom
-  { axis: 'x', sign: 1,  prefix: 'R', color: '#ff6b6b' },  // Red - right
-  { axis: 'x', sign: -1, prefix: 'B', color: '#4dabf7' },  // Blue - left
-  { axis: 'z', sign: 1,  prefix: 'G', color: '#51cf66' }   // Green - front
+  { axis: 'y', sign: 1,  prefix: 'R', color: '#ff6b6b' },  // Red - top
+  { axis: 'x', sign: -1, prefix: 'B', color: '#4dabf7' },  // Blue - left ext.
+  { axis: 'x', sign: 1,  prefix: 'Y', color: '#ffd43b' },  // Yellow - right ext.
+  { axis: 'z', sign: -1, prefix: 'W', color: '#f8f9fa' },  // White - left int.
+  { axis: 'z', sign: 1,  prefix: 'G', color: '#51cf66' }   // Green - right int.
 ];
 
 // Create wireframe keys on each face
@@ -121,6 +127,15 @@ faces.forEach(({ axis, sign, prefix, color }) => {
     }
   }
 });
+
+// ─── Diagonal holding position ───
+// Rotate so one corner points down, matching preferred hold (Figure 4)
+const diagAngle = Math.atan(1 / Math.sqrt(2)); // ≈ 35.26°
+keycubeGroup.rotation.z = Math.PI / 4;
+keycubeGroup.rotation.x = diagAngle;
+
+// Pivot: orbit around the cube center
+controls.target.set(0, 0, 0);
 
 scene.add(keycubeGroup);
 

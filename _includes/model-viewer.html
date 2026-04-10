@@ -9,7 +9,7 @@ scene.background = new THREE.Color('#ffffff');
 
 // Camera
 const camera = new THREE.PerspectiveCamera(25, 1, 0.1, 1000);
-camera.position.set(2, 2, 4);
+camera.position.set(3, 2, 4);
 const initialCameraPosition = camera.position.clone();
 
 // Renderer
@@ -29,7 +29,6 @@ camera.updateProjectionMatrix();
 // Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.saveState();
 
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -58,12 +57,19 @@ const REF_CIRCUMFERENCE = 193.4; // mm (right hand mean)
 const REF_LENGTH = 181.7;         // mm (right hand mean)
 const REF_SPAN = 204.1;           // mm (right hand mean)
 
+// Face layout — matches the diagonal holding position (Figure 4 of the paper).
+// The 6th face (y-1, bottom) has no keys and serves as the pivot corner.
+//   R (Red)    → y+1 (top)        — shared by both thumbs
+//   B (Blue)   → x-1 (left ext.)  — left hand fingers wrap around
+//   Y (Yellow) → x+1 (right ext.) — right hand fingers wrap around
+//   W (White)  → z-1 (left int.)  — faces the body, left side
+//   G (Green)  → z+1 (right int.) — faces the body, right side
 const faces = [
-  { axis: 'y', sign: 1, prefix: 'Y', color: 'yellow' },
-  { axis: 'y', sign: -1, prefix: 'W', color: 'white' },
-  { axis: 'x', sign: 1, prefix: 'R', color: 'red' },
+  { axis: 'y', sign: 1,  prefix: 'R', color: 'red' },
   { axis: 'x', sign: -1, prefix: 'B', color: 'blue' },
-  { axis: 'z', sign: 1, prefix: 'G', color: 'green' }
+  { axis: 'x', sign: 1,  prefix: 'Y', color: 'yellow' },
+  { axis: 'z', sign: -1, prefix: 'W', color: 'white' },
+  { axis: 'z', sign: 1,  prefix: 'G', color: 'green' }
 ];
 
 // Create text label as a small plane decal stuck on the key surface
@@ -154,6 +160,24 @@ faces.forEach(({ axis, sign, prefix, color }) => {
   }
 });
 
+// ─── Diagonal holding position ───
+// Rotate the cube so one corner points straight down,
+// matching the preferred diagonal hold from the study (Figure 4).
+// Rotation: 45° around Z, then ~35.26° around X (arctan(1/√2))
+// gives us a corner-down orientation with Red on top visible.
+const diagAngle = Math.atan(1 / Math.sqrt(2)); // ≈ 35.26°
+keycubeGroup.rotation.z = Math.PI / 4;          // 45° tilt
+keycubeGroup.rotation.x = diagAngle;            // corner-down
+
+// ─── Pivot point ───
+// The orbit target is set to the center of the cube (world origin)
+// so rotation always orbits around the cube's center.
+// The bottom corner (y-1 face, no keys) naturally points downward.
+const pivotPoint = new THREE.Vector3(0, 0, 0);
+controls.target.copy(pivotPoint);
+const initialControlsTarget = controls.target.clone();
+controls.saveState();
+
 scene.add(keycubeGroup);
 
 // Animation loop
@@ -209,6 +233,10 @@ window.updateModel = function(data) {
     cube.scale.set(1, 1, 1);
     keycubeGroup.scale.setScalar(1);
     keycubeGroup.scale.x = 1;
+    // Preserve diagonal holding rotation (never reset it)
+    keycubeGroup.rotation.z = Math.PI / 4;
+    keycubeGroup.rotation.x = diagAngle;
+    keycubeGroup.rotation.y = 0;
     return;
   }
   
@@ -281,7 +309,7 @@ window.updateModel = function(data) {
 
   if (data.resetView) {
     camera.position.copy(initialCameraPosition);
-    camera.lookAt(0, 0, 0);
+    controls.target.copy(initialControlsTarget);
     controls.reset();
   }
 

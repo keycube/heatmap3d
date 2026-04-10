@@ -152,9 +152,14 @@ animate();
 
 // ─── Responsive Resize ───
 // Ref: https://threejs.org/manual/#en/responsive
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+function handleResize() {
+  const container = document.getElementById('landing-canvas');
+  const w = container ? container.offsetWidth : window.innerWidth;
+  const h = container ? container.offsetHeight : window.innerHeight;
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  renderer.setSize(w, h);
+}
+window.addEventListener('resize', handleResize);
+window.addEventListener('orientationchange', () => setTimeout(handleResize, 100));
 </script>

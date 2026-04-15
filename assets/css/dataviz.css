@@ -298,7 +298,6 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
   background: #4dabf7;
   border-color: #4dabf7;
   color: #fff;
-  transform: scale(1.2);
   box-shadow: 0 0 10px rgba(77, 171, 247, 0.5);
   z-index: 100;
 }
@@ -307,7 +306,22 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
   border-color: #228be6;
   color: #fff;
   box-shadow: 0 0 12px rgba(77, 171, 247, 0.6);
+}
+/* Scale effect for non-middle fingers */
+.finger-dot:hover:not(.finger-middle-left):not(.finger-middle-right) {
+  transform: scale(1.2);
+}
+.finger-dot.active:not(.finger-middle-left):not(.finger-middle-right) {
   transform: scale(1.15);
+}
+/* Middle fingers need to preserve translateX centering */
+.finger-middle-left:hover,
+.finger-middle-right:hover {
+  transform: translateX(-50%) scale(1.2);
+}
+.finger-middle-left.active,
+.finger-middle-right.active {
+  transform: translateX(-50%) scale(1.15);
 }
 .finger-letter { font-size: 10px; font-weight: 700; line-height: 1; pointer-events: none; }
 

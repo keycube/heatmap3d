@@ -29,9 +29,10 @@ permalink: /reachability
             <button class="finger-dot finger-little-left" data-finger="LL" data-tooltip="Left Little"><span class="finger-letter">L</span></button>
           </div>
         </div>
-        <!-- Center: All button -->
-        <div class="hand-divider">
+        <!-- Center: All + Best buttons -->
+        <div class="hand-divider" style="display: flex; flex-direction: column; gap: 6px;">
           <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="All fingers combined (total score)">All</button>
+          <button class="hand-action-btn" id="btn-best-finger" data-tooltip="Best finger per key (preferred)">⭐ Best</button>
         </div>
         <!-- Right Hand -->
         <div class="hand-analog" id="right-hand-analog">
@@ -46,10 +47,6 @@ permalink: /reachability
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="hand-actions">
-      <button class="hand-action-btn" id="btn-best-finger" data-tooltip="Best finger per key (preferred)">⭐ Best</button>
     </div>
   </div>
 

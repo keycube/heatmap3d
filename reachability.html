@@ -46,7 +46,8 @@ permalink: /reachability
     </div>
 
     <div class="hand-actions">
-      <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="All fingers combined">All</button>
+      <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="All fingers combined (total score)">All</button>
+      <button class="hand-action-btn" id="btn-best-finger" data-tooltip="Best finger per key (preferred)">Best</button>
       <button class="hand-action-btn" id="btn-left-all" data-tooltip="Left hand combined">Left</button>
       <button class="hand-action-btn" id="btn-right-all" data-tooltip="Right hand combined">Right</button>
     </div>
@@ -126,6 +127,26 @@ permalink: /reachability
     <p style="font-size: 0.85em; opacity: 0.8;">📊 Per finger: max 66 (3 × 22 participants)<br>📊 All fingers: max ~220 (varies by key)</p>
   </div>
 
+  <h4>View Modes</h4>
+  <div class="study-info">
+    <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">All</span>
+      <span style="flex: 1; font-size: 13px;">Total score (all fingers summed)</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">Best</span>
+      <span style="flex: 1; font-size: 13px;">⭐ Best finger score per key</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">Left/Right</span>
+      <span style="flex: 1; font-size: 13px;">One hand's fingers combined</span>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">Finger</span>
+      <span style="flex: 1; font-size: 13px;">Click a dot for single finger</span>
+    </div>
+  </div>
+
   <h4>Scoring System</h4>
   <div class="study-info">
     <p style="margin-bottom: 8px;">Each participant rated each key per finger:</p>
@@ -185,12 +206,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var allFingerDots = document.querySelectorAll('.finger-dot');
   var analogRings = document.querySelectorAll('.analog-ring');
   var btnAllFingers = document.getElementById('btn-all-fingers');
+  var btnBestFinger = document.getElementById('btn-best-finger');
   var btnLeftAll = document.getElementById('btn-left-all');
   var btnRightAll = document.getElementById('btn-right-all');
   var handActionBtns = document.querySelectorAll('.hand-action-btn');
 
   var fingerNames = {
     'total': 'All Fingers (Total)',
+    'best': 'Best Finger (per key)',
     'LT': 'Left Thumb', 'LI': 'Left Index', 'LM': 'Left Middle',
     'LR': 'Left Ring', 'LL': 'Left Little',
     'RT': 'Right Thumb', 'RI': 'Right Index', 'RM': 'Right Middle',
@@ -199,13 +222,14 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   var fingerIcons = {
-    'total': '🖐️', 'left-all': '🤚', 'right-all': '🤚',
+    'total': '🖐️', 'best': '⭐', 'left-all': '🤚', 'right-all': '🤚',
     'LT': '👍', 'LI': '☝️', 'LM': '🖕', 'LR': '💍', 'LL': '🤙',
     'RT': '👍', 'RI': '☝️', 'RM': '🖕', 'RR': '💍', 'RL': '🤙'
   };
 
   var fingerContextInfo = {
-    'total': 'Combined reachability across all 10 fingers and 22 participants.',
+    'total': 'Combined reachability across all 10 fingers and 22 participants. Max score ~220.',
+    'best': 'Shows the score of the best-performing finger for each key. Max score = 66 per key.',
     'left-all': 'Left hand covers Blue (external), White (internal), and left half of Red (top).',
     'right-all': 'Right hand covers Yellow (external), Green (internal), and right half of Red (top).',
     'LT': 'Left Thumb — widest reach on the left side. Covers left half of Red (top) and edges of Blue & White.',
@@ -318,7 +342,63 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // Best Finger view: for each key, show the score of the finger with highest reachability
+  function handleBestFinger() {
+    var allFingers = ['LT','LI','LM','LR','LL','RT','RI','RM','RR','RL'];
+    var faces = ['R','B','G','W','Y'];
+    var result = { R: [], B: [], G: [], W: [], Y: [] };
+
+    faces.forEach(function (face) {
+      for (var i = 0; i < 16; i++) {
+        var bestScore = 0;
+        allFingers.forEach(function (finger) {
+          var fData = window.perFingerReachability[finger];
+          if (fData) {
+            var fingerSum = 0;
+            fData.forEach(function (p) { fingerSum += p[face][i]; });
+            if (fingerSum > bestScore) bestScore = fingerSum;
+          }
+        });
+        result[face].push(bestScore);
+      }
+    });
+
+    var min = Infinity, max = -Infinity;
+    faces.forEach(function (face) {
+      result[face].forEach(function (v) {
+        if (v < min) min = v;
+        if (v > max) max = v;
+      });
+    });
+
+    var scores = {
+      R: result.R, B: result.B, G: result.G, W: result.W, Y: result.Y
+    };
+
+    if (window.updateModel) {
+      window.updateModel({ 
+        heatmap: result, 
+        heatmapMin: min, 
+        heatmapMax: max,
+        scores: scores,
+        showScores: true,
+        isReachability: true
+      });
+    }
+
+    if (selectionText) selectionText.textContent = fingerNames['best'];
+    if (selectionIcon) selectionIcon.textContent = fingerIcons['best'];
+    if (fingerContext) fingerContext.textContent = fingerContextInfo['best'] || '';
+
+    allFingerDots.forEach(function (dot) { dot.classList.remove('active'); });
+    analogRings.forEach(function (ring) { ring.classList.remove('active'); });
+
+    handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
+    btnBestFinger.classList.add('active');
+  }
+
   if (btnAllFingers) btnAllFingers.addEventListener('click', function () { updateSelection('total'); });
+  if (btnBestFinger) btnBestFinger.addEventListener('click', function () { handleBestFinger(); });
   if (btnLeftAll) btnLeftAll.addEventListener('click', function () { handleHandAll('left'); });
   if (btnRightAll) btnRightAll.addEventListener('click', function () { handleHandAll('right'); });
 });

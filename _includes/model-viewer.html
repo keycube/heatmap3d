@@ -27,20 +27,19 @@ if (container) {
 }
 camera.updateProjectionMatrix();
 
-// Controls
+// Controls — smooth rotation like Playdate
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-// Lock vertical (polar) rotation so the cube always stays flat.
-// User can rotate horizontally (azimuth) freely but cannot flip
-// the cube upside-down or view it from below.
-// Polar angle 0 = top-down, π/2 = horizon, π = bottom-up.
-// We allow a narrow band around the initial 3/4 view angle.
-controls.minPolarAngle = Math.PI / 6;   // ~30° — slight top-down
-controls.maxPolarAngle = Math.PI / 2.5; // ~72° — never below horizon
+controls.dampingFactor = 0.05;  // Smooth inertia effect
+controls.rotateSpeed = 0.5;     // Slower, more controlled rotation
 
 // Zoom limits
 controls.minDistance = 3;   // Prevent zooming too close
 controls.maxDistance = 12;  // Prevent zooming too far
+
+// Auto-rotation settings (integrated with OrbitControls)
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.0;  // Slow rotation (degrees per second)
 
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -178,16 +177,13 @@ faces.forEach(({ axis, sign, prefix, color }) => {
 // With camera at Z-5 (behind), we rotate -135° (or +225°) to show G and W.
 keycubeGroup.rotation.y = -Math.PI * 3 / 4;  // -135° to show G and W faces
 
-// ─── Auto-rotation ───
-// Cube rotates slowly until user interacts (click, touch, or scroll)
-let autoRotate = true;
-const autoRotateSpeed = 0.003;  // Slow rotation speed (radians per frame)
-
+// ─── Auto-rotation control ───
+// OrbitControls.autoRotate handles the smooth rotation.
+// Stop auto-rotation on any user interaction.
 function stopAutoRotate() {
-  autoRotate = false;
+  controls.autoRotate = false;
 }
 
-// Stop auto-rotation on any user interaction
 renderer.domElement.addEventListener('pointerdown', stopAutoRotate);
 renderer.domElement.addEventListener('wheel', stopAutoRotate);
 renderer.domElement.addEventListener('touchstart', stopAutoRotate);
@@ -204,11 +200,6 @@ scene.add(keycubeGroup);
 // Animation loop
 function animate() {
   requestAnimationFrame(animate);
-  
-  // Auto-rotate the cube slowly until user interacts
-  if (autoRotate) {
-    keycubeGroup.rotation.y += autoRotateSpeed;
-  }
   
   controls.update();
   renderer.render(scene, camera);

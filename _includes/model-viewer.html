@@ -128,8 +128,8 @@ function createTextLabel(text, axis, sign) {
 // Create dynamic score label (initially hidden)
 function createScoreLabel(axis, sign) {
   const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 128;
+  canvas.width = 256;
+  canvas.height = 256;
   
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;
@@ -141,7 +141,7 @@ function createScoreLabel(axis, sign) {
     side: THREE.FrontSide
   });
 
-  const planeSize = 0.12;
+  const planeSize = 0.14;  // Slightly larger to fit both texts
   const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
   const mesh = new THREE.Mesh(geometry, material);
 
@@ -163,28 +163,28 @@ function createScoreLabel(axis, sign) {
 function updateScoreLabelText(mesh, score, keyID) {
   const canvas = mesh.userData.canvas;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 128, 128);
+  ctx.clearRect(0, 0, 256, 256);
   
   // Format score: display as integer (1-10)
   const scoreText = Math.round(score).toString();
   
-  // Draw key ID in small text at top
-  ctx.font = 'bold 28px Arial';
+  // Draw key ID in smaller text at top
+  ctx.font = 'bold 48px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-  ctx.lineWidth = 3;
-  ctx.strokeText(keyID, 64, 32);
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.fillText(keyID, 64, 32);
+  ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+  ctx.lineWidth = 5;
+  ctx.strokeText(keyID, 128, 70);
+  ctx.fillStyle = 'white';
+  ctx.fillText(keyID, 128, 70);
   
   // Draw score in larger text below
-  ctx.font = 'bold 52px Arial';
-  ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-  ctx.lineWidth = 5;
-  ctx.strokeText(scoreText, 64, 82);
+  ctx.font = 'bold 90px Arial';
+  ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+  ctx.lineWidth = 7;
+  ctx.strokeText(scoreText, 128, 170);
   ctx.fillStyle = 'white';
-  ctx.fillText(scoreText, 64, 82);
+  ctx.fillText(scoreText, 128, 170);
   
   mesh.userData.texture.needsUpdate = true;
   mesh.visible = true;

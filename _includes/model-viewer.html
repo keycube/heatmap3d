@@ -60,23 +60,22 @@ const spacing = 0.20;
 const offset = 0.5;
 
 // Face layout — matches the diagonal holding position (Figure 4 of the paper).
-// The cube is rotated 45° around Y so from the camera the two front
-// diagonal faces are:  front-left = x-1,  front-right = z+1.
-// The USER stands BEHIND the cube, so their left/right is mirrored
-// relative to the camera.
+// The cube is rotated 45° around Y so from the camera (now at Z-5, behind the cube)
+// the two visible diagonal faces are: front-left = z-1, front-right = x+1.
+// The USER stands BEHIND the cube (same as camera), so their perspective matches.
 // The 6th face (y-1, bottom) has no keys.
 //
 //   R (Red)    → y+1 (top)         — shared by both thumbs
-//   B (Blue)   → z+1 (front-right) — user's left hand
-//   Y (Yellow) → x-1 (front-left)  — user's right hand
-//   W (White)  → x+1 (back-right)  — next to Blue
-//   G (Green)  → z-1 (back-left)   — next to Yellow
+//   B (Blue)   → z-1 (front-left from camera)  — user's LEFT hand external face
+//   Y (Yellow) → x+1 (front-right from camera) — user's RIGHT hand external face
+//   W (White)  → x-1 (back-left)   — next to Blue, internal
+//   G (Green)  → z+1 (back-right)  — next to Yellow, internal
 const faces = [
   { axis: 'y', sign: 1,  prefix: 'R', color: 'red' },
-  { axis: 'z', sign: 1,  prefix: 'B', color: 'blue' },
-  { axis: 'x', sign: -1, prefix: 'Y', color: 'yellow' },
-  { axis: 'x', sign: 1,  prefix: 'W', color: 'white' },
-  { axis: 'z', sign: -1, prefix: 'G', color: 'green' }
+  { axis: 'z', sign: -1, prefix: 'B', color: 'blue' },
+  { axis: 'x', sign: 1,  prefix: 'Y', color: 'yellow' },
+  { axis: 'x', sign: -1, prefix: 'W', color: 'white' },
+  { axis: 'z', sign: 1,  prefix: 'G', color: 'green' }
 ];
 
 // Create text label as a small plane decal stuck on the key surface

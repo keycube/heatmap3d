@@ -38,6 +38,10 @@ controls.enableDamping = true;
 controls.minPolarAngle = Math.PI / 6;   // ~30° — slight top-down
 controls.maxPolarAngle = Math.PI / 2.5; // ~72° — never below horizon
 
+// Zoom limits
+controls.minDistance = 3;   // Prevent zooming too close
+controls.maxDistance = 12;  // Prevent zooming too far
+
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -170,7 +174,23 @@ faces.forEach(({ axis, sign, prefix, color }) => {
 // The cube is held FLAT and horizontal, rotated 45° around the
 // vertical axis (Y). Seen from above it forms a diamond/rhombus.
 // Red face is on top, 6th face (no keys) is on the bottom.
-keycubeGroup.rotation.y = Math.PI / 4;  // 45° around vertical axis
+// Initial view shows G (Green, z+1) and W (White, x-1) faces in foreground.
+// With camera at Z-5 (behind), we rotate -135° (or +225°) to show G and W.
+keycubeGroup.rotation.y = -Math.PI * 3 / 4;  // -135° to show G and W faces
+
+// ─── Auto-rotation ───
+// Cube rotates slowly until user interacts (click, touch, or scroll)
+let autoRotate = true;
+const autoRotateSpeed = 0.003;  // Slow rotation speed (radians per frame)
+
+function stopAutoRotate() {
+  autoRotate = false;
+}
+
+// Stop auto-rotation on any user interaction
+renderer.domElement.addEventListener('pointerdown', stopAutoRotate);
+renderer.domElement.addEventListener('wheel', stopAutoRotate);
+renderer.domElement.addEventListener('touchstart', stopAutoRotate);
 
 // ─── Orbit pivot ───
 // Target = cube center. The user can spin the cube around itself
@@ -184,6 +204,12 @@ scene.add(keycubeGroup);
 // Animation loop
 function animate() {
   requestAnimationFrame(animate);
+  
+  // Auto-rotate the cube slowly until user interacts
+  if (autoRotate) {
+    keycubeGroup.rotation.y += autoRotateSpeed;
+  }
+  
   controls.update();
   renderer.render(scene, camera);
 }
@@ -233,7 +259,7 @@ window.updateModel = function(data) {
     keycubeGroup.scale.setScalar(1);
     keycubeGroup.scale.x = 1;
     // Preserve diagonal holding rotation (never reset it)
-    keycubeGroup.rotation.set(0, Math.PI / 4, 0);
+    keycubeGroup.rotation.set(0, -Math.PI * 3 / 4, 0);
     return;
   }
   

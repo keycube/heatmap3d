@@ -159,24 +159,32 @@ function createScoreLabel(axis, sign) {
   return mesh;
 }
 
-// Update score label text
-function updateScoreLabelText(mesh, score) {
+// Update score label text - shows both key ID and score
+function updateScoreLabelText(mesh, score, keyID) {
   const canvas = mesh.userData.canvas;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 128, 128);
   
   // Format score: display as integer (1-10)
-  const text = Math.round(score).toString();
+  const scoreText = Math.round(score).toString();
   
-  // Draw text with outline for readability
-  ctx.font = 'bold 52px Arial';
+  // Draw key ID in small text at top
+  ctx.font = 'bold 28px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+  ctx.lineWidth = 3;
+  ctx.strokeText(keyID, 64, 32);
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillText(keyID, 64, 32);
+  
+  // Draw score in larger text below
+  ctx.font = 'bold 52px Arial';
+  ctx.strokeStyle = 'rgba(0,0,0,0.8)';
   ctx.lineWidth = 5;
-  ctx.strokeText(text, 64, 64);
+  ctx.strokeText(scoreText, 64, 82);
   ctx.fillStyle = 'white';
-  ctx.fillText(text, 64, 64);
+  ctx.fillText(scoreText, 64, 82);
   
   mesh.userData.texture.needsUpdate = true;
   mesh.visible = true;
@@ -354,7 +362,7 @@ window.updateModel = function(data) {
         data.scores[face].forEach((score, idx) => {
           const keyID = `${face}${idx + 1}`;
           if (scoreLabels[keyID]) {
-            updateScoreLabelText(scoreLabels[keyID], score);
+            updateScoreLabelText(scoreLabels[keyID], score, keyID);
           }
         });
       }

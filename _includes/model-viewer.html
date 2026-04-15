@@ -81,13 +81,31 @@ const faces = [
   { axis: 'z', sign: 1,  prefix: 'G', color: 'green' }
 ];
 
+// Orient a plane to face outward from a surface
+function orientPlane(mesh, axis, sign) {
+  if (axis === 'y') mesh.rotation.x = sign > 0 ? -Math.PI / 2 : Math.PI / 2;
+  else if (axis === 'x') mesh.rotation.y = sign > 0 ? Math.PI / 2 : -Math.PI / 2;
+  else if (sign < 0) mesh.rotation.y = Math.PI;
+}
+
+// Create a label plane with canvas texture
+function createLabelPlane(size, canvasSize, axis, sign) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = canvasSize;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(size, size),
+    new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: true, depthWrite: false })
+  );
+  orientPlane(mesh, axis, sign);
+  return { mesh, canvas, texture };
+}
+
 // Create text label as a small plane decal stuck on the key surface
 function createTextLabel(text, axis, sign) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 128;
+  const { mesh, canvas } = createLabelPlane(0.13, 128, axis, sign);
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 128, 128);
   ctx.font = 'bold 56px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -96,66 +114,15 @@ function createTextLabel(text, axis, sign) {
   ctx.strokeText(text, 64, 64);
   ctx.fillStyle = 'white';
   ctx.fillText(text, 64, 64);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.minFilter = THREE.LinearFilter;
-  const material = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    depthTest: true,
-    depthWrite: false,
-    side: THREE.FrontSide
-  });
-
-  const planeSize = 0.13;
-  const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
-  const mesh = new THREE.Mesh(geometry, material);
-
-  // Orient the plane to face outward from the key surface
-  if (axis === 'y') {
-    mesh.rotation.x = sign > 0 ? -Math.PI / 2 : Math.PI / 2;
-  } else if (axis === 'x') {
-    mesh.rotation.y = sign > 0 ? Math.PI / 2 : -Math.PI / 2;
-  } else {
-    // z axis: sign > 0 faces toward camera (no rotation needed), sign < 0 faces away
-    if (sign < 0) mesh.rotation.y = Math.PI;
-  }
-
   mesh.userData = { isLabel: true };
   return mesh;
 }
 
 // Create dynamic score label (initially hidden)
 function createScoreLabel(axis, sign) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
-  
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.minFilter = THREE.LinearFilter;
-  const material = new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    depthTest: true,
-    depthWrite: false,
-    side: THREE.FrontSide
-  });
-
-  const planeSize = 0.14;  // Slightly larger to fit both texts
-  const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
-  const mesh = new THREE.Mesh(geometry, material);
-
-  // Orient the plane to face outward from the key surface
-  if (axis === 'y') {
-    mesh.rotation.x = sign > 0 ? -Math.PI / 2 : Math.PI / 2;
-  } else if (axis === 'x') {
-    mesh.rotation.y = sign > 0 ? Math.PI / 2 : -Math.PI / 2;
-  } else {
-    if (sign < 0) mesh.rotation.y = Math.PI;
-  }
-
-  mesh.userData = { isScoreLabel: true, canvas: canvas, texture: texture };
-  mesh.visible = false; // Hidden by default
+  const { mesh, canvas, texture } = createLabelPlane(0.14, 256, axis, sign);
+  mesh.userData = { isScoreLabel: true, canvas, texture };
+  mesh.visible = false;
   return mesh;
 }
 
@@ -164,38 +131,41 @@ let isReachabilityMode = false;
 
 // Update score label text - shows both key ID and score
 function updateScoreLabelText(mesh, score, keyID) {
-  const canvas = mesh.userData.canvas;
+  const { canvas, texture } = mesh.userData;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 256, 256);
   
-  // Format score as integer
-  const scoreText = Math.round(score).toString();
-  
-  // Draw key ID in smaller text at top
+  // Draw key ID
   ctx.font = 'bold 56px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.strokeStyle = 'black';
   ctx.lineWidth = 6;
   ctx.strokeText(keyID, 128, 75);
-  ctx.fillStyle = '#FFFF00';  // Yellow for visibility
+  ctx.fillStyle = '#FFFF00';
   ctx.fillText(keyID, 128, 75);
   
-  // Draw score - adjust font size for reachability (larger numbers)
-  const scoreFontSize = isReachabilityMode && score >= 100 ? 70 : 100;
-  ctx.font = `bold ${scoreFontSize}px Arial`;
-  ctx.strokeStyle = 'black';
+  // Draw score
+  const fontSize = isReachabilityMode && score >= 100 ? 70 : 100;
+  ctx.font = `bold ${fontSize}px Arial`;
   ctx.lineWidth = 8;
-  ctx.strokeText(scoreText, 128, 175);
+  ctx.strokeText(Math.round(score), 128, 175);
   ctx.fillStyle = 'white';
-  ctx.fillText(scoreText, 128, 175);
+  ctx.fillText(Math.round(score), 128, 175);
   
-  mesh.userData.texture.needsUpdate = true;
+  texture.needsUpdate = true;
   mesh.visible = true;
 }
 
 // Store score labels for each key
 const scoreLabels = {};
+
+// Helper to calculate label position
+function getLabelPosition(axis, sign, u, v, lift) {
+  if (axis === 'y') return { x: u, y: (offset + lift) * sign, z: v };
+  if (axis === 'x') return { x: (offset + lift) * sign, y: u, z: v };
+  return { x: u, y: v, z: (offset + lift) * sign };
+}
 
 // Create keys
 faces.forEach(({ axis, sign, prefix, color }) => {
@@ -204,51 +174,30 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       const key = new THREE.Mesh(keyGeometry, new THREE.MeshStandardMaterial({ color }));
       const keyIndex = i * 4 + j + 1;
       const keyID = `${prefix}${keyIndex}`;
-      
-      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis: axis, sign: sign, gridI: i, gridJ: j };
-      key.name = keyID;
-
       const u = (i - 1.5) * spacing;
       const v = (j - 1.5) * spacing;
-
-      if (axis === 'y') {
-        key.position.set(u, offset * sign, v);
-      } else if (axis === 'x') {
-        key.position.set(offset * sign, u, v);
-      } else {
-        key.position.set(u, v, offset * sign);
-      }
-
-      // Store original position immediately at creation time
+      
+      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis, sign, gridI: i, gridJ: j };
+      key.name = keyID;
+      
+      const pos = getLabelPosition(axis, sign, u, v, 0);
+      key.position.set(pos.x, pos.y, pos.z);
       key.userData.originalPosition = key.position.clone();
-
       keycubeGroup.add(key);
 
-      // Add text label flush on the key's outer surface
+      // Add text label
       const label = createTextLabel(keyID, axis, sign);
-      label.userData.parentKeyId = keyID; // link label to its parent key
-      const labelLift = 0.078; // half key height + tiny gap to avoid z-fighting
-      if (axis === 'y') {
-        label.position.set(u, (offset + labelLift) * sign, v);
-      } else if (axis === 'x') {
-        label.position.set((offset + labelLift) * sign, u, v);
-      } else {
-        label.position.set(u, v, (offset + labelLift) * sign);
-      }
+      label.userData.parentKeyId = keyID;
+      const labelPos = getLabelPosition(axis, sign, u, v, 0.078);
+      label.position.set(labelPos.x, labelPos.y, labelPos.z);
       label.userData.originalPosition = label.position.clone();
       keycubeGroup.add(label);
 
-      // Add score label (hidden by default, shown when participant selected)
+      // Add score label (hidden by default)
       const scoreLabel = createScoreLabel(axis, sign);
       scoreLabel.userData.parentKeyId = keyID;
-      const scoreLabelLift = 0.079; // slightly above the key
-      if (axis === 'y') {
-        scoreLabel.position.set(u, (offset + scoreLabelLift) * sign, v);
-      } else if (axis === 'x') {
-        scoreLabel.position.set((offset + scoreLabelLift) * sign, u, v);
-      } else {
-        scoreLabel.position.set(u, v, (offset + scoreLabelLift) * sign);
-      }
+      const scorePos = getLabelPosition(axis, sign, u, v, 0.079);
+      scoreLabel.position.set(scorePos.x, scorePos.y, scorePos.z);
       scoreLabel.userData.originalPosition = scoreLabel.position.clone();
       keycubeGroup.add(scoreLabel);
       scoreLabels[keyID] = scoreLabel;
@@ -257,60 +206,38 @@ faces.forEach(({ axis, sign, prefix, color }) => {
 });
 
 // ─── Diagonal holding position (Figure 4, left photo) ───
-// The cube is held FLAT and horizontal, rotated 45° around the
-// vertical axis (Y). Seen from above it forms a diamond/rhombus.
-// Red face is on top, 6th face (no keys) is on the bottom.
-// Initial view shows G (Green, z+1) and W (White, x-1) faces in foreground.
-// With camera at Z-5 (behind), we rotate -135° (or +225°) to show G and W.
 keycubeGroup.rotation.y = -Math.PI * 3 / 4;  // -135° to show G and W faces
+const DIAGONAL_ROTATION = -Math.PI * 3 / 4;
 
 // ─── Auto-rotation control ───
-// OrbitControls.autoRotate handles the smooth rotation.
-// Stop auto-rotation on any user interaction.
-function stopAutoRotate() {
-  controls.autoRotate = false;
-}
-
-renderer.domElement.addEventListener('pointerdown', stopAutoRotate);
-renderer.domElement.addEventListener('wheel', stopAutoRotate);
-renderer.domElement.addEventListener('touchstart', stopAutoRotate);
+['pointerdown', 'wheel', 'touchstart'].forEach(evt => 
+  renderer.domElement.addEventListener(evt, () => controls.autoRotate = false)
+);
 
 // ─── Orbit pivot ───
-// Target = cube center. The user can spin the cube around itself
-// horizontally, but vertical tilt is locked (see polar angle limits).
 controls.target.set(0, 0, 0);
 const initialControlsTarget = controls.target.clone();
-controls.saveState();
 
 scene.add(keycubeGroup);
 
 // Animation loop
-function animate() {
+(function animate() {
   requestAnimationFrame(animate);
-  
   controls.update();
   renderer.render(scene, camera);
-}
+})();
 
-animate();
-
-// Window resize and orientation change
+// Window resize handler
 function handleResize() {
-  const container = document.getElementById('model-container');
-  if (container) {
-    camera.aspect = container.offsetWidth / container.offsetHeight;
-    renderer.setSize(container.offsetWidth, container.offsetHeight);
-  } else {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
+  const c = document.getElementById('model-container');
+  const w = c ? c.offsetWidth : window.innerWidth;
+  const h = c ? c.offsetHeight : window.innerHeight;
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
 }
-
 window.addEventListener('resize', handleResize);
-window.addEventListener('orientationchange', () => {
-  setTimeout(handleResize, 100);
-});
+window.addEventListener('orientationchange', () => setTimeout(handleResize, 100));
 
 // Update model function
 window.updateModel = function(data) {
@@ -342,66 +269,43 @@ window.updateModel = function(data) {
     keycubeGroup.scale.setScalar(1);
     keycubeGroup.scale.x = 1;
     // Preserve diagonal holding rotation (never reset it)
-    keycubeGroup.rotation.set(0, -Math.PI * 3 / 4, 0);
+    keycubeGroup.rotation.set(0, DIAGONAL_ROTATION, 0);
     return;
   }
 
-  // Show/hide score labels (and hide/show text labels inversely)
+  // Show/hide score labels
   if (data.showScores !== undefined) {
-    Object.values(scoreLabels).forEach(label => {
-      label.visible = data.showScores;
-    });
-    // Hide text labels when showing scores
-    keycubeGroup.children.forEach(child => {
-      if (child.userData?.isLabel) {
-        child.visible = !data.showScores;
-      }
+    Object.values(scoreLabels).forEach(l => l.visible = data.showScores);
+    keycubeGroup.children.forEach(c => {
+      if (c.userData?.isLabel) c.visible = !data.showScores;
     });
   }
 
-  // Track reachability mode for score formatting
-  if (data.isReachability !== undefined) {
-    isReachabilityMode = data.isReachability;
-  }
+  if (data.isReachability !== undefined) isReachabilityMode = data.isReachability;
 
-  // Update score values on labels
+  // Update score values
   if (data.scores) {
     ['R', 'B', 'G', 'W', 'Y'].forEach(face => {
-      if (data.scores[face]) {
-        data.scores[face].forEach((score, idx) => {
-          const keyID = `${face}${idx + 1}`;
-          if (scoreLabels[keyID]) {
-            updateScoreLabelText(scoreLabels[keyID], score, keyID);
-          }
-        });
-      }
+      data.scores[face]?.forEach((score, idx) => {
+        const label = scoreLabels[`${face}${idx + 1}`];
+        if (label) updateScoreLabelText(label, score, `${face}${idx + 1}`);
+      });
     });
   }
 
-  // Hide scores (when no participant selected) and restore text labels
+  // Hide scores and restore text labels
   if (data.hideScores) {
-    Object.values(scoreLabels).forEach(label => {
-      label.visible = false;
-    });
-    // Show text labels again
-    keycubeGroup.children.forEach(child => {
-      if (child.userData?.isLabel) {
-        child.visible = true;
-      }
+    Object.values(scoreLabels).forEach(l => l.visible = false);
+    keycubeGroup.children.forEach(c => {
+      if (c.userData?.isLabel) c.visible = true;
     });
   }
   
   if (data.wireframe !== undefined) {
-    scene.traverse(function (child) {
-        if (child.isMesh && !child.userData?.isLabel) {
-            child.material.wireframe = data.wireframe;
-        }
-    });
+    scene.traverse(c => { if (c.isMesh && !c.userData?.isLabel) c.material.wireframe = data.wireframe; });
   }
 
-  if (data.backgroundColor) {
-      renderer.setClearColor(data.backgroundColor);
-  }
+  if (data.backgroundColor) renderer.setClearColor(data.backgroundColor);
 
   if (data.resetView) {
     camera.position.copy(initialCameraPosition);
@@ -411,64 +315,33 @@ window.updateModel = function(data) {
     controls.update();
   }
 
-  if (data.lightingIntensity !== undefined) {
-    directionalLight.intensity = data.lightingIntensity;
-  }
+  if (data.lightingIntensity !== undefined) directionalLight.intensity = data.lightingIntensity;
 
-  // ─── Heatmap color helper ───
-  // invert=true: low value → green, high value → red (for preference: 1=best → green)
-  // invert=false: low value → red, high value → green (for reachability: high=good → green)
-  function heatmapColor(normalized, invert) {
-    const hue = (invert ? (1 - normalized) : normalized) * 0.33;
-    const c = new THREE.Color();
-    c.setHSL(hue, 0.9, 0.5);
-    return c;
-  }
+  // Heatmap color: invert=true → low=green (preference), invert=false → high=green (reachability)
+  const heatmapColor = (norm, invert) => new THREE.Color().setHSL((invert ? 1 - norm : norm) * 0.33, 0.9, 0.5);
 
-  // Heatmap visualization — all faces
-  if (data.heatmap) {
-    const heatmapData = data.heatmap;
-    const min = data.heatmapMin !== undefined ? data.heatmapMin : 0;
-    const max = data.heatmapMax !== undefined ? data.heatmapMax : 1;
+  // Apply heatmap to keys
+  const applyHeatmap = (heatmapData, min, max, invert, dimOthers) => {
     const range = max - min || 1;
-    const invert = !!data.heatmapInvert; // true for preference data
-
-    keycubeGroup.children.forEach(child => {
-      if (child.userData?.face && child.userData?.index && heatmapData[child.userData.face]) {
-        const value = heatmapData[child.userData.face][child.userData.index - 1];
-        const normalized = Math.max(0, Math.min(1, (value - min) / range));
-        child.material.color.set(heatmapColor(normalized, invert));
-        child.scale.set(1, 1, 1);
-      } else if (child !== cube && child.userData?.originalColor) {
-        child.material.color.set(child.userData.originalColor);
-        child.scale.set(1, 1, 1);
-      }
-    });
-  }
-
-  // Heatmap visualization — single face highlighted, others dimmed
-  if (data.heatmapSingleFace) {
-    const heatmapData = data.heatmapSingleFace;
-    const min = data.heatmapMin !== undefined ? data.heatmapMin : 0;
-    const max = data.heatmapMax !== undefined ? data.heatmapMax : 1;
-    const range = max - min || 1;
-    const invert = !!data.heatmapInvert;
-
     keycubeGroup.children.forEach(child => {
       if (!child.userData?.face || !child.userData?.index) return;
-
       child.scale.set(1, 1, 1);
-
       if (heatmapData[child.userData.face]) {
-        const value = heatmapData[child.userData.face][child.userData.index - 1];
-        const normalized = Math.max(0, Math.min(1, (value - min) / range));
-        child.material.color.set(heatmapColor(normalized, invert));
-      } else {
-        const dimmed = new THREE.Color(child.userData.originalColor);
-        dimmed.multiplyScalar(0.3);
-        child.material.color.set(dimmed);
+        const val = heatmapData[child.userData.face][child.userData.index - 1];
+        child.material.color.set(heatmapColor(Math.max(0, Math.min(1, (val - min) / range)), invert));
+      } else if (dimOthers) {
+        child.material.color.set(new THREE.Color(child.userData.originalColor).multiplyScalar(0.3));
+      } else if (child.userData.originalColor) {
+        child.material.color.set(child.userData.originalColor);
       }
     });
+  };
+
+  if (data.heatmap) {
+    applyHeatmap(data.heatmap, data.heatmapMin ?? 0, data.heatmapMax ?? 1, !!data.heatmapInvert, false);
+  }
+  if (data.heatmapSingleFace) {
+    applyHeatmap(data.heatmapSingleFace, data.heatmapMin ?? 0, data.heatmapMax ?? 1, !!data.heatmapInvert, true);
   }
 };
 </script>

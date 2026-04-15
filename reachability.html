@@ -197,80 +197,64 @@ permalink: /reachability
 document.addEventListener('DOMContentLoaded', function () {
   var fingerSelect = document.getElementById('finger-select');
   var selectionText = document.getElementById('selection-text');
-  var selectionBadge = document.getElementById('selection-badge');
-  var selectionIcon = selectionBadge ? selectionBadge.querySelector('.selection-icon') : null;
+  var selectionIcon = document.querySelector('#selection-badge .selection-icon');
   var fingerContext = document.getElementById('finger-context');
   var allFingerDots = document.querySelectorAll('.finger-dot');
   var analogRings = document.querySelectorAll('.analog-ring');
   var btnAllFingers = document.getElementById('btn-all-fingers');
   var btnBestFinger = document.getElementById('btn-best-finger');
   var handActionBtns = document.querySelectorAll('.hand-action-btn');
+  var FACES = ['R','B','G','W','Y'];
 
-  var fingerNames = {
-    'total': 'All Fingers (Total)',
-    'best': 'Best Finger (per key)',
-    'LT': 'Left Thumb', 'LI': 'Left Index', 'LM': 'Left Middle',
-    'LR': 'Left Ring', 'LL': 'Left Little',
-    'RT': 'Right Thumb', 'RI': 'Right Index', 'RM': 'Right Middle',
-    'RR': 'Right Ring', 'RL': 'Right Little',
-    'left-all': 'Left Hand (All)', 'right-all': 'Right Hand (All)'
+  var fingerData = {
+    'total': { name: 'All Fingers (Total)', icon: '�️', info: 'Combined reachability across all 10 fingers and 22 participants. Max score ~220.' },
+    'best': { name: 'Best Finger (per key)', icon: '⭐', info: 'Shows the score of the best-performing finger for each key. Max score = 66 per key.' },
+    'left-all': { name: 'Left Hand (All)', icon: '🤚', info: 'Left hand covers Blue (external), White (internal), and left half of Red (top).' },
+    'right-all': { name: 'Right Hand (All)', icon: '🤚', info: 'Right hand covers Yellow (external), Green (internal), and right half of Red (top).' },
+    'LT': { name: 'Left Thumb', icon: '👍', info: 'Left Thumb — widest reach on the left side.' },
+    'LI': { name: 'Left Index', icon: '☝️', info: 'Left Index — upper rows of Blue face.' },
+    'LM': { name: 'Left Middle', icon: '🖕', info: 'Left Middle — middle rows of Blue face.' },
+    'LR': { name: 'Left Ring', icon: '💍', info: 'Left Ring — lower rows of Blue face.' },
+    'LL': { name: 'Left Little', icon: '🤙', info: 'Left Little — bottom corner of Blue only.' },
+    'RT': { name: 'Right Thumb', icon: '👍', info: 'Right Thumb — widest reach on right side.' },
+    'RI': { name: 'Right Index', icon: '☝️', info: 'Right Index — upper rows of Yellow face.' },
+    'RM': { name: 'Right Middle', icon: '🖕', info: 'Right Middle — middle rows of Yellow face.' },
+    'RR': { name: 'Right Ring', icon: '💍', info: 'Right Ring — lower rows of Yellow face.' },
+    'RL': { name: 'Right Little', icon: '🤙', info: 'Right Little — bottom corner of Yellow only.' }
   };
 
-  var fingerIcons = {
-    'total': '🖐️', 'best': '⭐', 'left-all': '🤚', 'right-all': '🤚',
-    'LT': '👍', 'LI': '☝️', 'LM': '🖕', 'LR': '💍', 'LL': '🤙',
-    'RT': '👍', 'RI': '☝️', 'RM': '🖕', 'RR': '💍', 'RL': '🤙'
-  };
-
-  var fingerContextInfo = {
-    'total': 'Combined reachability across all 10 fingers and 22 participants. Max score ~220.',
-    'best': 'Shows the score of the best-performing finger for each key. Max score = 66 per key.',
-    'left-all': 'Left hand covers Blue (external), White (internal), and left half of Red (top).',
-    'right-all': 'Right hand covers Yellow (external), Green (internal), and right half of Red (top).',
-    'LT': 'Left Thumb — widest reach on the left side. Covers left half of Red (top) and edges of Blue & White.',
-    'LI': 'Left Index — upper rows of Blue face (external).',
-    'LM': 'Left Middle — middle rows of Blue face. Some reach on White.',
-    'LR': 'Left Ring — lower rows of Blue face. Very limited reach.',
-    'LL': 'Left Little — bottom corner of Blue only. Most restricted finger.',
-    'RT': 'Right Thumb — widest reach on right side. Covers right half of Red (top) and edges of Yellow & Green.',
-    'RI': 'Right Index — upper rows of Yellow face (external).',
-    'RM': 'Right Middle — middle rows of Yellow face. Some reach on Green.',
-    'RR': 'Right Ring — lower rows of Yellow face. Very limited reach.',
-    'RL': 'Right Little — bottom corner of Yellow only. Most restricted finger.'
-  };
-
-  function updateSelection(fingerValue) {
-    if (fingerSelect) {
-      fingerSelect.value = fingerValue;
-      fingerSelect.dispatchEvent(new Event('change'));
-    }
-    if (selectionText) selectionText.textContent = fingerNames[fingerValue] || fingerValue;
-    if (selectionIcon) selectionIcon.textContent = fingerIcons[fingerValue] || '��️';
-    if (fingerContext) fingerContext.textContent = fingerContextInfo[fingerValue] || '';
-
+  function updateUI(key, activeFingers) {
+    var data = fingerData[key] || { name: key, icon: '🖐️', info: '' };
+    if (selectionText) selectionText.textContent = data.name;
+    if (selectionIcon) selectionIcon.textContent = data.icon;
+    if (fingerContext) fingerContext.textContent = data.info;
+    
     allFingerDots.forEach(function (dot) {
-      dot.classList.toggle('active', dot.getAttribute('data-finger') === fingerValue);
+      var f = dot.getAttribute('data-finger');
+      dot.classList.toggle('active', activeFingers ? activeFingers.indexOf(f) !== -1 : f === key);
     });
     analogRings.forEach(function (ring) { ring.classList.remove('active'); });
-    if (fingerValue.charAt(0) === 'L') {
-      var leftRing = document.querySelector('.analog-ring[data-hand="left"]');
-      if (leftRing) leftRing.classList.add('active');
-    } else if (fingerValue.charAt(0) === 'R') {
-      var rightRing = document.querySelector('.analog-ring[data-hand="right"]');
-      if (rightRing) rightRing.classList.add('active');
+    if (key.charAt(0) === 'L' || key === 'left-all') {
+      var lr = document.querySelector('.analog-ring[data-hand="left"]');
+      if (lr) lr.classList.add('active');
+    } else if (key.charAt(0) === 'R' || key === 'right-all') {
+      var rr = document.querySelector('.analog-ring[data-hand="right"]');
+      if (rr) rr.classList.add('active');
     }
-    handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
-    if (fingerValue === 'total') btnAllFingers.classList.add('active');
   }
 
-  function handleHandAll(hand) {
-    var fingers = hand === 'left'
-      ? ['LT','LI','LM','LR','LL']
-      : ['RT','RI','RM','RR','RL'];
-    var faces = ['R','B','G','W','Y'];
-    var result = { R: [], B: [], G: [], W: [], Y: [] };
+  function applyHeatmap(data) {
+    var min = Infinity, max = -Infinity;
+    FACES.forEach(function (f) { data[f].forEach(function (v) { if (v < min) min = v; if (v > max) max = v; }); });
+    if (window.updateModel) {
+      window.updateModel({ heatmap: data, heatmapMin: min, heatmapMax: max, scores: data, showScores: true, isReachability: true });
+    }
+  }
 
-    faces.forEach(function (face) {
+  function computeHandData(fingers) {
+    var result = {};
+    FACES.forEach(function (face) {
+      result[face] = [];
       for (var i = 0; i < 16; i++) {
         var sum = 0;
         fingers.forEach(function (f) {
@@ -280,120 +264,50 @@ document.addEventListener('DOMContentLoaded', function () {
         result[face].push(sum);
       }
     });
+    return result;
+  }
 
-    var min = Infinity, max = -Infinity;
-    faces.forEach(function (face) {
-      result[face].forEach(function (v) {
-        if (v < min) min = v;
-        if (v > max) max = v;
-      });
-    });
-
-    // Prepare scores for display
-    var scores = {
-      R: result.R, B: result.B, G: result.G, W: result.W, Y: result.Y
-    };
-
-    if (window.updateModel) {
-      window.updateModel({ 
-        heatmap: result, 
-        heatmapMin: min, 
-        heatmapMax: max,
-        scores: scores,
-        showScores: true,
-        isReachability: true
-      });
-    }
-
-    var key = hand + '-all';
-    if (selectionText) selectionText.textContent = fingerNames[key];
-    if (selectionIcon) selectionIcon.textContent = fingerIcons[key];
-    if (fingerContext) fingerContext.textContent = fingerContextInfo[key] || '';
-
-    allFingerDots.forEach(function (dot) {
-      var f = dot.getAttribute('data-finger');
-      dot.classList.toggle('active', fingers.indexOf(f) !== -1);
-    });
-    analogRings.forEach(function (ring) { ring.classList.remove('active'); });
-    var targetRing = document.querySelector('.analog-ring[data-hand="' + hand + '"]');
-    if (targetRing) targetRing.classList.add('active');
-
-    // Deselect action buttons when selecting a hand
+  function updateSelection(fingerValue) {
+    if (fingerSelect) { fingerSelect.value = fingerValue; fingerSelect.dispatchEvent(new Event('change')); }
+    updateUI(fingerValue);
     handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
-    btnAllFingers.classList.remove('active');
+    if (fingerValue === 'total') btnAllFingers.classList.add('active');
+  }
+
+  function handleHandAll(hand) {
+    var fingers = hand === 'left' ? ['LT','LI','LM','LR','LL'] : ['RT','RI','RM','RR','RL'];
+    applyHeatmap(computeHandData(fingers));
+    updateUI(hand + '-all', fingers);
+    handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
+  }
+
+  function handleBestFinger() {
+    var allFingers = ['LT','LI','LM','LR','LL','RT','RI','RM','RR','RL'];
+    var result = {};
+    FACES.forEach(function (face) {
+      result[face] = [];
+      for (var i = 0; i < 16; i++) {
+        var best = 0;
+        allFingers.forEach(function (f) {
+          var fData = window.perFingerReachability[f];
+          if (fData) { var s = 0; fData.forEach(function (p) { s += p[face][i]; }); if (s > best) best = s; }
+        });
+        result[face].push(best);
+      }
+    });
+    applyHeatmap(result);
+    updateUI('best');
+    handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
+    btnBestFinger.classList.add('active');
   }
 
   allFingerDots.forEach(function (dot) {
-    dot.addEventListener('click', function (e) {
-      e.stopPropagation();
-      updateSelection(dot.getAttribute('data-finger'));
-    });
+    dot.addEventListener('click', function (e) { e.stopPropagation(); updateSelection(dot.getAttribute('data-finger')); });
   });
-
   analogRings.forEach(function (ring) {
-    ring.addEventListener('click', function (e) {
-      if (e.target.closest('.finger-dot')) return;
-      handleHandAll(ring.getAttribute('data-hand'));
-    });
+    ring.addEventListener('click', function (e) { if (!e.target.closest('.finger-dot')) handleHandAll(ring.getAttribute('data-hand')); });
   });
-
-  // Best Finger view: for each key, show the score of the finger with highest reachability
-  function handleBestFinger() {
-    var allFingers = ['LT','LI','LM','LR','LL','RT','RI','RM','RR','RL'];
-    var faces = ['R','B','G','W','Y'];
-    var result = { R: [], B: [], G: [], W: [], Y: [] };
-
-    faces.forEach(function (face) {
-      for (var i = 0; i < 16; i++) {
-        var bestScore = 0;
-        allFingers.forEach(function (finger) {
-          var fData = window.perFingerReachability[finger];
-          if (fData) {
-            var fingerSum = 0;
-            fData.forEach(function (p) { fingerSum += p[face][i]; });
-            if (fingerSum > bestScore) bestScore = fingerSum;
-          }
-        });
-        result[face].push(bestScore);
-      }
-    });
-
-    var min = Infinity, max = -Infinity;
-    faces.forEach(function (face) {
-      result[face].forEach(function (v) {
-        if (v < min) min = v;
-        if (v > max) max = v;
-      });
-    });
-
-    var scores = {
-      R: result.R, B: result.B, G: result.G, W: result.W, Y: result.Y
-    };
-
-    if (window.updateModel) {
-      window.updateModel({ 
-        heatmap: result, 
-        heatmapMin: min, 
-        heatmapMax: max,
-        scores: scores,
-        showScores: true,
-        isReachability: true
-      });
-    }
-
-    if (selectionText) selectionText.textContent = fingerNames['best'];
-    if (selectionIcon) selectionIcon.textContent = fingerIcons['best'];
-    if (fingerContext) fingerContext.textContent = fingerContextInfo['best'] || '';
-
-    allFingerDots.forEach(function (dot) { dot.classList.remove('active'); });
-    analogRings.forEach(function (ring) { ring.classList.remove('active'); });
-
-    handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
-    btnBestFinger.classList.add('active');
-    btnAllFingers.classList.remove('active');
-  }
-
   if (btnAllFingers) btnAllFingers.addEventListener('click', function () { updateSelection('total'); });
-  if (btnBestFinger) btnBestFinger.addEventListener('click', function () { handleBestFinger(); });
+  if (btnBestFinger) btnBestFinger.addEventListener('click', handleBestFinger);
 });
 </script>

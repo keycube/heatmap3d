@@ -59,8 +59,12 @@ permalink: /preference
 <!-- Side panel -->
 <div id="info-panel" class="side-panel glass-panel hidden">
 
-  <h4>Selection</h4>
-  <div id="mode-description">Select a participant to view their preference data, or choose <strong>Aggregate</strong> for the mean across all participants.</div>
+  <h4>How to Use</h4>
+  <div id="mode-description">
+    <p style="margin-bottom: 8px;">1. Select a <strong>participant</strong> from the dropdown</p>
+    <p style="margin-bottom: 8px;">2. Use <strong>R B G W Y</strong> buttons to filter by face</p>
+    <p>3. Rotate the cube to explore all keys</p>
+  </div>
 
   <!-- Participant summary (hidden until selection) -->
   <div id="participant-summary" style="display: none;">
@@ -71,19 +75,27 @@ permalink: /preference
     <p><strong>Span:</strong> <span id="summary-span"></span> mm</p>
   </div>
 
-  <h4>Score Display</h4>
+  <h4>Reading the Keys</h4>
   <div class="score-info">
-    <p>When a <strong>participant is selected</strong>, each key displays:</p>
-    <ul style="margin: 8px 0; padding-left: 20px;">
-      <li><span style="color: #ffd43b; font-weight: bold;">Key ID</span> (e.g., R1, G5) — top</li>
-      <li><span style="color: white; font-weight: bold;">Score</span> (1-10) — bottom</li>
-    </ul>
-    <p><strong>Score meaning:</strong></p>
-    <ul style="margin: 8px 0; padding-left: 20px;">
-      <li><strong style="color: #51cf66;">1</strong> = Most preferred (green)</li>
-      <li><strong style="color: #ff6b6b;">10</strong> = Least preferred (red)</li>
-    </ul>
-    <p style="font-size: 0.85em; opacity: 0.8;">💡 Scores are hidden in Aggregate mode to reduce visual clutter.</p>
+    <p style="margin-bottom: 10px;">When a participant is selected, each key shows:</p>
+    <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px; text-align: center;">
+      <div style="color: #ffd43b; font-weight: bold; font-size: 14px;">G5</div>
+      <div style="color: white; font-weight: bold; font-size: 24px;">3</div>
+      <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">Key ID + Score</div>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <div style="text-align: center;">
+        <span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; background: #51cf66; color: black; font-weight: bold; border-radius: 4px;">1</span>
+        <div style="font-size: 11px; margin-top: 4px;">Best</div>
+      </div>
+      <div style="text-align: center; opacity: 0.6;">
+        <span>← preference →</span>
+      </div>
+      <div style="text-align: center;">
+        <span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; background: #ff6b6b; color: white; font-weight: bold; border-radius: 4px;">10</span>
+        <div style="font-size: 11px; margin-top: 4px;">Worst</div>
+      </div>
+    </div>
   </div>
 
   <h4>Study Info</h4>
@@ -94,10 +106,17 @@ permalink: /preference
       <div class="study-stat-item"><strong>77.4%</strong>Diagonal</div>
       <div class="study-stat-item"><strong>80</strong>Keys</div>
     </div>
-    <p><strong>Study 1:</strong> Identified preferred holding positions. Diagonal chosen by 77.4%.</p>
-    <p><strong>Study 2:</strong> Mapped finger-to-key preferences (1 = most preferred → 10 = least).</p>
-    <p><strong>Color scale:</strong> Green (high preference) → Yellow → Red (low preference).</p>
-    <p><strong>Faces:</strong> Red (top), Blue &amp; Yellow (external), White &amp; Green (internal).</p>
+    <p><strong>Study 1:</strong> Preferred holding position → Diagonal (77.4%).</p>
+    <p><strong>Study 2:</strong> Finger-to-key preference mapping.</p>
+  </div>
+
+  <h4>Faces</h4>
+  <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;">
+    <span style="background: #ff6b6b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px;">R Top</span>
+    <span style="background: #4dabf7; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px;">B External</span>
+    <span style="background: #ffd43b; color: black; padding: 3px 8px; border-radius: 4px; font-size: 12px;">Y External</span>
+    <span style="background: #f8f9fa; color: black; padding: 3px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #ccc;">W Internal</span>
+    <span style="background: #51cf66; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px;">G Internal</span>
   </div>
 
 </div>

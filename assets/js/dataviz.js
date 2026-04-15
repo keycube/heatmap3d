@@ -72,10 +72,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!window.updateModel) return;
     var data = getPreferenceData();
     if (!data) {
-      // No participant selected — reset to original colors
-      window.updateModel({ reset: true });
+      // No participant selected — reset to original colors and hide scores
+      window.updateModel({ reset: true, hideScores: true });
       return;
     }
+
+    // Prepare scores data for display on keys
+    var scores = {
+      R: data.R, B: data.B, G: data.G, W: data.W, Y: data.Y
+    };
 
     if (currentFace) {
       // Show single face heatmap, dim the others
@@ -84,14 +89,28 @@ document.addEventListener('DOMContentLoaded', function () {
       // Build a single-face heatmap object
       var singleFace = {};
       singleFace[currentFace] = faceData;
-      window.updateModel({ heatmapSingleFace: singleFace, heatmapMin: 1, heatmapMax: 10, heatmapInvert: true });
+      window.updateModel({ 
+        heatmapSingleFace: singleFace, 
+        heatmapMin: 1, 
+        heatmapMax: 10, 
+        heatmapInvert: true,
+        scores: scores,
+        showScores: true
+      });
     } else {
       // Show all faces as heatmap
       // For individual participants, data has R/B/G/W/Y arrays
       var heatmap = currentParticipant === 'aggregate' ? aggregatePreference : {
         R: data.R, B: data.B, G: data.G, W: data.W, Y: data.Y
       };
-      window.updateModel({ heatmap: heatmap, heatmapMin: 1, heatmapMax: 10, heatmapInvert: true });
+      window.updateModel({ 
+        heatmap: heatmap, 
+        heatmapMin: 1, 
+        heatmapMax: 10, 
+        heatmapInvert: true,
+        scores: scores,
+        showScores: true
+      });
     }
   }
 
@@ -118,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (summaryPanel) summaryPanel.style.display = 'none';
         updateSelectionBadge('📊', 'Aggregate (Mean of 22 participants)');
         // Reset cube scale for aggregate
-        if (window.updateModel) window.updateModel({ reset: true });
+        if (window.updateModel) window.updateModel({ reset: true, hideScores: true });
         applyPreferenceView();
       } else if (val !== '') {
         currentParticipant = participantsData[parseInt(val)];
@@ -150,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
         currentParticipant = null;
         if (summaryPanel) summaryPanel.style.display = 'none';
         updateSelectionBadge('🎯', 'No participant selected');
-        if (window.updateModel) window.updateModel({ reset: true });
+        if (window.updateModel) window.updateModel({ reset: true, hideScores: true });
       }
     });
   }

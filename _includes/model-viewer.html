@@ -125,6 +125,66 @@ function createTextLabel(text, axis, sign) {
   return mesh;
 }
 
+// Create dynamic score label (initially hidden)
+function createScoreLabel(axis, sign) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: true,
+    depthWrite: false,
+    side: THREE.FrontSide
+  });
+
+  const planeSize = 0.12;
+  const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+  const mesh = new THREE.Mesh(geometry, material);
+
+  // Orient the plane to face outward from the key surface
+  if (axis === 'y') {
+    mesh.rotation.x = sign > 0 ? -Math.PI / 2 : Math.PI / 2;
+  } else if (axis === 'x') {
+    mesh.rotation.y = sign > 0 ? Math.PI / 2 : -Math.PI / 2;
+  } else {
+    if (sign < 0) mesh.rotation.y = Math.PI;
+  }
+
+  mesh.userData = { isScoreLabel: true, canvas: canvas, texture: texture };
+  mesh.visible = false; // Hidden by default
+  return mesh;
+}
+
+// Update score label text
+function updateScoreLabelText(mesh, score) {
+  const canvas = mesh.userData.canvas;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 128, 128);
+  
+  // Format score: display as integer (1-10)
+  const text = Math.round(score).toString();
+  
+  // Draw text with outline for readability
+  ctx.font = 'bold 52px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+  ctx.lineWidth = 5;
+  ctx.strokeText(text, 64, 64);
+  ctx.fillStyle = 'white';
+  ctx.fillText(text, 64, 64);
+  
+  mesh.userData.texture.needsUpdate = true;
+  mesh.visible = true;
+}
+
+// Store score labels for each key
+const scoreLabels = {};
+
 // Create keys
 faces.forEach(({ axis, sign, prefix, color }) => {
   for (let i = 0; i < 4; i++) {
@@ -165,6 +225,21 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       }
       label.userData.originalPosition = label.position.clone();
       keycubeGroup.add(label);
+
+      // Add score label (hidden by default, shown when participant selected)
+      const scoreLabel = createScoreLabel(axis, sign);
+      scoreLabel.userData.parentKeyId = keyID;
+      const scoreLabelLift = 0.079; // slightly above the key
+      if (axis === 'y') {
+        scoreLabel.position.set(u, (offset + scoreLabelLift) * sign, v);
+      } else if (axis === 'x') {
+        scoreLabel.position.set((offset + scoreLabelLift) * sign, u, v);
+      } else {
+        scoreLabel.position.set(u, v, (offset + scoreLabelLift) * sign);
+      }
+      scoreLabel.userData.originalPosition = scoreLabel.position.clone();
+      keycubeGroup.add(scoreLabel);
+      scoreLabels[keyID] = scoreLabel;
     }
   }
 });
@@ -242,8 +317,13 @@ window.updateModel = function(data) {
         if (child.userData.originalPosition) {
           child.position.copy(child.userData.originalPosition);
         }
-      } else if (child.userData?.isLabel && child.userData.originalPosition) {
-        child.position.copy(child.userData.originalPosition);
+      } else if (child.userData?.isLabel) {
+        child.visible = true; // Show text labels on reset
+        if (child.userData.originalPosition) {
+          child.position.copy(child.userData.originalPosition);
+        }
+      } else if (child.userData?.isScoreLabel) {
+        child.visible = false; // Hide score labels on reset
       }
     });
     // Reset cube scale
@@ -252,6 +332,46 @@ window.updateModel = function(data) {
     // Preserve diagonal holding rotation (never reset it)
     keycubeGroup.rotation.set(0, -Math.PI * 3 / 4, 0);
     return;
+  }
+
+  // Show/hide score labels (and hide/show text labels inversely)
+  if (data.showScores !== undefined) {
+    Object.values(scoreLabels).forEach(label => {
+      label.visible = data.showScores;
+    });
+    // Hide text labels when showing scores
+    keycubeGroup.children.forEach(child => {
+      if (child.userData?.isLabel) {
+        child.visible = !data.showScores;
+      }
+    });
+  }
+
+  // Update score values on labels
+  if (data.scores) {
+    ['R', 'B', 'G', 'W', 'Y'].forEach(face => {
+      if (data.scores[face]) {
+        data.scores[face].forEach((score, idx) => {
+          const keyID = `${face}${idx + 1}`;
+          if (scoreLabels[keyID]) {
+            updateScoreLabelText(scoreLabels[keyID], score);
+          }
+        });
+      }
+    });
+  }
+
+  // Hide scores (when no participant selected) and restore text labels
+  if (data.hideScores) {
+    Object.values(scoreLabels).forEach(label => {
+      label.visible = false;
+    });
+    // Show text labels again
+    keycubeGroup.children.forEach(child => {
+      if (child.userData?.isLabel) {
+        child.visible = true;
+      }
+    });
   }
   
   if (data.wireframe !== undefined) {

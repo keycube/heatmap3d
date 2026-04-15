@@ -33,9 +33,12 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.05;  // Smooth inertia effect
 controls.rotateSpeed = 0.5;     // Slower, more controlled rotation
 
-// Zoom limits
-controls.minDistance = 3;   // Prevent zooming too close
-controls.maxDistance = 12;  // Prevent zooming too far
+// Zoom disabled (Playdate style)
+controls.enableZoom = false;
+
+// Vertical rotation limits (keep cube upright, like Playdate)
+controls.minPolarAngle = Math.PI * 0.25;  // 45° from top
+controls.maxPolarAngle = Math.PI * 0.65;  // 117° (slight view from below)
 
 // Auto-rotation settings (integrated with OrbitControls)
 controls.autoRotate = true;

@@ -96,6 +96,8 @@ body, html {
   justify-content: center;
   width: 180px;
   height: 120px;
+  padding: 12px 16px;
+  box-sizing: border-box;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.7);
@@ -108,6 +110,7 @@ body, html {
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
   overflow: hidden;
+  text-align: center;
 }
 
 .nav-btn::before {
@@ -140,8 +143,9 @@ body, html {
 /* ─── Button Icon ─── */
 .nav-btn .btn-icon {
   font-size: 2rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   transition: transform 0.3s ease;
+  line-height: 1;
 }
 
 .nav-btn:hover .btn-icon {
@@ -154,6 +158,7 @@ body, html {
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
+  text-align: center;
 }
 
 /* ─── Button Description ─── */
@@ -162,6 +167,9 @@ body, html {
   color: rgba(0, 0, 0, 0.45);
   margin-top: 0.25rem;
   letter-spacing: 0.5px;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 100%;
 }
 
 /* ─── Individual Button Accent Colors ─── */

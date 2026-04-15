@@ -168,23 +168,23 @@ function updateScoreLabelText(mesh, score, keyID) {
   // Format score: display as integer (1-10)
   const scoreText = Math.round(score).toString();
   
-  // Draw key ID in smaller text at top
-  ctx.font = 'bold 48px Arial';
+  // Draw key ID in smaller text at top (more visible positioning)
+  ctx.font = 'bold 56px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-  ctx.lineWidth = 5;
-  ctx.strokeText(keyID, 128, 70);
-  ctx.fillStyle = 'white';
-  ctx.fillText(keyID, 128, 70);
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 6;
+  ctx.strokeText(keyID, 128, 75);
+  ctx.fillStyle = '#FFFF00';  // Yellow for visibility
+  ctx.fillText(keyID, 128, 75);
   
   // Draw score in larger text below
-  ctx.font = 'bold 90px Arial';
-  ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-  ctx.lineWidth = 7;
-  ctx.strokeText(scoreText, 128, 170);
+  ctx.font = 'bold 100px Arial';
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 8;
+  ctx.strokeText(scoreText, 128, 175);
   ctx.fillStyle = 'white';
-  ctx.fillText(scoreText, 128, 170);
+  ctx.fillText(scoreText, 128, 175);
   
   mesh.userData.texture.needsUpdate = true;
   mesh.visible = true;

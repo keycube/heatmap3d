@@ -29,7 +29,10 @@ permalink: /reachability
             <button class="finger-dot finger-little-left" data-finger="LL" data-tooltip="Left Little"><span class="finger-letter">L</span></button>
           </div>
         </div>
-        <div class="hand-divider"><span>or</span></div>
+        <!-- Center: All button -->
+        <div class="hand-divider">
+          <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="All fingers combined (total score)">All</button>
+        </div>
         <!-- Right Hand -->
         <div class="hand-analog" id="right-hand-analog">
           <div class="analog-label">Right</div>
@@ -46,10 +49,7 @@ permalink: /reachability
     </div>
 
     <div class="hand-actions">
-      <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="All fingers combined (total score)">All</button>
-      <button class="hand-action-btn" id="btn-best-finger" data-tooltip="Best finger per key (preferred)">Best</button>
-      <button class="hand-action-btn" id="btn-left-all" data-tooltip="Left hand combined">Left</button>
-      <button class="hand-action-btn" id="btn-right-all" data-tooltip="Right hand combined">Right</button>
+      <button class="hand-action-btn" id="btn-best-finger" data-tooltip="Best finger per key (preferred)">⭐ Best</button>
     </div>
   </div>
 
@@ -131,19 +131,19 @@ permalink: /reachability
   <div class="study-info">
     <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
       <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">All</span>
-      <span style="flex: 1; font-size: 13px;">Total score (all fingers summed)</span>
+      <span style="flex: 1; font-size: 13px;">Total score (all 10 fingers summed)</span>
     </div>
     <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
-      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">Best</span>
-      <span style="flex: 1; font-size: 13px;">⭐ Best finger score per key</span>
+      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">⭐ Best</span>
+      <span style="flex: 1; font-size: 13px;">Best finger score per key</span>
     </div>
     <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
-      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">Left/Right</span>
-      <span style="flex: 1; font-size: 13px;">One hand's fingers combined</span>
+      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">🤚</span>
+      <span style="flex: 1; font-size: 13px;">Click hand center → 5 fingers combined</span>
     </div>
     <div style="display: flex; gap: 8px; align-items: center;">
-      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">Finger</span>
-      <span style="flex: 1; font-size: 13px;">Click a dot for single finger</span>
+      <span style="background: #868e96; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px;">T I M R L</span>
+      <span style="flex: 1; font-size: 13px;">Click a dot → single finger</span>
     </div>
   </div>
 
@@ -207,8 +207,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var analogRings = document.querySelectorAll('.analog-ring');
   var btnAllFingers = document.getElementById('btn-all-fingers');
   var btnBestFinger = document.getElementById('btn-best-finger');
-  var btnLeftAll = document.getElementById('btn-left-all');
-  var btnRightAll = document.getElementById('btn-right-all');
   var handActionBtns = document.querySelectorAll('.hand-action-btn');
 
   var fingerNames = {
@@ -323,9 +321,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var targetRing = document.querySelector('.analog-ring[data-hand="' + hand + '"]');
     if (targetRing) targetRing.classList.add('active');
 
+    // Deselect action buttons when selecting a hand
     handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
-    if (hand === 'left') btnLeftAll.classList.add('active');
-    else btnRightAll.classList.add('active');
+    btnAllFingers.classList.remove('active');
   }
 
   allFingerDots.forEach(function (dot) {
@@ -395,11 +393,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     handActionBtns.forEach(function (btn) { btn.classList.remove('active'); });
     btnBestFinger.classList.add('active');
+    btnAllFingers.classList.remove('active');
   }
 
   if (btnAllFingers) btnAllFingers.addEventListener('click', function () { updateSelection('total'); });
   if (btnBestFinger) btnBestFinger.addEventListener('click', function () { handleBestFinger(); });
-  if (btnLeftAll) btnLeftAll.addEventListener('click', function () { handleHandAll('left'); });
-  if (btnRightAll) btnRightAll.addEventListener('click', function () { handleHandAll('right'); });
 });
 </script>

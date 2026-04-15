@@ -159,16 +159,19 @@ function createScoreLabel(axis, sign) {
   return mesh;
 }
 
+// Track current mode for score formatting
+let isReachabilityMode = false;
+
 // Update score label text - shows both key ID and score
 function updateScoreLabelText(mesh, score, keyID) {
   const canvas = mesh.userData.canvas;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 256, 256);
   
-  // Format score: display as integer (1-10)
+  // Format score as integer
   const scoreText = Math.round(score).toString();
   
-  // Draw key ID in smaller text at top (more visible positioning)
+  // Draw key ID in smaller text at top
   ctx.font = 'bold 56px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -178,8 +181,9 @@ function updateScoreLabelText(mesh, score, keyID) {
   ctx.fillStyle = '#FFFF00';  // Yellow for visibility
   ctx.fillText(keyID, 128, 75);
   
-  // Draw score in larger text below
-  ctx.font = 'bold 100px Arial';
+  // Draw score - adjust font size for reachability (larger numbers)
+  const scoreFontSize = isReachabilityMode && score >= 100 ? 70 : 100;
+  ctx.font = `bold ${scoreFontSize}px Arial`;
   ctx.strokeStyle = 'black';
   ctx.lineWidth = 8;
   ctx.strokeText(scoreText, 128, 175);
@@ -353,6 +357,11 @@ window.updateModel = function(data) {
         child.visible = !data.showScores;
       }
     });
+  }
+
+  // Track reachability mode for score formatting
+  if (data.isReachability !== undefined) {
+    isReachabilityMode = data.isReachability;
   }
 
   // Update score values on labels

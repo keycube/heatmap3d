@@ -95,27 +95,70 @@ permalink: /reachability
 <!-- Side panel -->
 <div id="info-panel" class="side-panel glass-panel hidden">
 
-  <h4>Holding Position</h4>
-  <div class="holding-diagram">
-    <div class="holding-info-text">
-      Preferred by <strong>77.4%</strong> of participants. Cube held diagonally, thumbs on top.
+  <h4>How to Use</h4>
+  <div class="mode-description">
+    <p style="margin-bottom: 8px;">1. Click a <strong>finger dot</strong> to see its reach</p>
+    <p style="margin-bottom: 8px;">2. Click the <strong>hand center</strong> for all 5 fingers</p>
+    <p>3. Use <strong>All / Left / Right</strong> buttons for quick filtering</p>
+  </div>
+
+  <h4>Reading the Keys</h4>
+  <div class="score-info">
+    <p style="margin-bottom: 10px;">Each key displays its reachability score:</p>
+    <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px; text-align: center;">
+      <div style="color: #ffd43b; font-weight: bold; font-size: 14px;">B3</div>
+      <div style="color: white; font-weight: bold; font-size: 24px;">192</div>
+      <div style="font-size: 11px; opacity: 0.7; margin-top: 4px;">Key ID + Score</div>
     </div>
-    <div class="hand-face-map">
-      <div class="hand-face-card">
-        <div class="hand-face-title">🤚 Left</div>
-        <div class="face-tags">
-          <span class="face-tag" style="background:#4dabf7;color:#fff;">Blue</span>
-          <span class="face-tag" style="background:#f8f9fa;color:#333;border:1px solid #ccc;">White</span>
-          <span class="face-tag half-tag" style="background:#ff6b6b;color:#fff;">Red ½</span>
-        </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+      <div style="text-align: center;">
+        <span style="display: inline-block; width: 28px; height: 28px; line-height: 28px; background: #ff6b6b; color: white; font-weight: bold; border-radius: 4px;">0</span>
+        <div style="font-size: 11px; margin-top: 4px;">Unreachable</div>
       </div>
-      <div class="hand-face-card">
-        <div class="hand-face-title">Right ��</div>
-        <div class="face-tags">
-          <span class="face-tag" style="background:#ffd43b;color:#333;">Yellow</span>
-          <span class="face-tag" style="background:#51cf66;color:#fff;">Green</span>
-          <span class="face-tag half-tag" style="background:#ff6b6b;color:#fff;">Red ½</span>
-        </div>
+      <div style="text-align: center; opacity: 0.6;">
+        <span>← reachability →</span>
+      </div>
+      <div style="text-align: center;">
+        <span style="display: inline-block; width: 32px; height: 28px; line-height: 28px; background: #51cf66; color: white; font-weight: bold; border-radius: 4px; font-size: 12px;">max</span>
+        <div style="font-size: 11px; margin-top: 4px;">Easy reach</div>
+      </div>
+    </div>
+    <p style="font-size: 0.85em; opacity: 0.8;">📊 Per finger: max 66 (3 × 22 participants)<br>📊 All fingers: max ~220 (varies by key)</p>
+  </div>
+
+  <h4>Scoring System</h4>
+  <div class="study-info">
+    <p style="margin-bottom: 8px;">Each participant rated each key per finger:</p>
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <span style="background: #51cf66; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold;">3</span>
+      <span style="flex: 1; font-size: 13px;">Easily reachable</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <span style="background: #ffd43b; color: black; padding: 4px 10px; border-radius: 4px; font-weight: bold;">1</span>
+      <span style="flex: 1; font-size: 13px;">Reachable with effort</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <span style="background: #ff6b6b; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold;">0</span>
+      <span style="flex: 1; font-size: 13px;">Unreachable</span>
+    </div>
+  </div>
+
+  <h4>Hand-Face Mapping</h4>
+  <div class="hand-face-map" style="margin-top: 8px;">
+    <div class="hand-face-card">
+      <div class="hand-face-title">🤚 Left Hand</div>
+      <div class="face-tags">
+        <span class="face-tag" style="background:#4dabf7;color:#fff;">B</span>
+        <span class="face-tag" style="background:#f8f9fa;color:#333;border:1px solid #ccc;">W</span>
+        <span class="face-tag" style="background:#ff6b6b;color:#fff;">R½</span>
+      </div>
+    </div>
+    <div class="hand-face-card">
+      <div class="hand-face-title">Right Hand 🤚</div>
+      <div class="face-tags">
+        <span class="face-tag" style="background:#ffd43b;color:#333;">Y</span>
+        <span class="face-tag" style="background:#51cf66;color:#fff;">G</span>
+        <span class="face-tag" style="background:#ff6b6b;color:#fff;">R½</span>
       </div>
     </div>
   </div>
@@ -128,9 +171,6 @@ permalink: /reachability
       <div class="study-stat-item"><strong>10</strong>Fingers</div>
       <div class="study-stat-item"><strong>3-pt</strong>Scale</div>
     </div>
-    <p><strong>Scoring:</strong> 3 = easily reachable, 1 = with effort, 0 = unreachable.</p>
-    <p><strong>Data:</strong> Sum across 22 participants. Max per key per finger = 66.</p>
-    <p><strong>Faces:</strong> Red (top, shared), Blue (left ext.), Yellow (right ext.), White (left int.), Green (right int.).</p>
   </div>
 
 </div>
@@ -230,8 +270,20 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
+    // Prepare scores for display
+    var scores = {
+      R: result.R, B: result.B, G: result.G, W: result.W, Y: result.Y
+    };
+
     if (window.updateModel) {
-      window.updateModel({ heatmap: result, heatmapMin: min, heatmapMax: max });
+      window.updateModel({ 
+        heatmap: result, 
+        heatmapMin: min, 
+        heatmapMax: max,
+        scores: scores,
+        showScores: true,
+        isReachability: true
+      });
     }
 
     var key = hand + '-all';

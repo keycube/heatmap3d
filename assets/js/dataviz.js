@@ -218,7 +218,20 @@ document.addEventListener('DOMContentLoaded', function () {
       data = getFingerReachability(finger);
     }
     var range = getRange(data);
-    window.updateModel({ heatmap: data, heatmapMin: range.min, heatmapMax: range.max });
+    
+    // Prepare scores for display on keys
+    var scores = {
+      R: data.R, B: data.B, G: data.G, W: data.W, Y: data.Y
+    };
+    
+    window.updateModel({ 
+      heatmap: data, 
+      heatmapMin: range.min, 
+      heatmapMax: range.max,
+      scores: scores,
+      showScores: true,
+      isReachability: true  // Flag to format scores differently
+    });
   }
 
   // Finger filter for reachability

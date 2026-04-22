@@ -1,253 +1,221 @@
-# Maintenance Guide — Keycube Heatmap 3D
+# Maintenance Notes — Keycube Heatmap 3D
 
-Documentation technique pour la maintenance de l'application.
+Document technique secondaire pour la maintenance du projet.
 
----
+Le point d'entrée principal reste [README.md](README.md). Ce fichier sert surtout de référence technique plus ciblée.
 
-## Architecture
+## État actuel du projet
 
-```
+L'application expose deux vues autonomes:
+
+- `/preference/`
+- `/reachability/`
+
+La racine `/` redirige vers `/preference/`.
+
+Le workflow local recommandé n'est pas Jekyll. Le workflow recommandé est:
+
+1. générer un build statique avec `scripts/build_local_site.py`
+2. servir `.local_site/` avec un serveur HTTP local
+
+## Architecture actuelle
+
+```text
 heatmap3d/
-├── index.html              # Page d'accueil (layout: landing)
-├── preference.html         # Visualisation des préférences
-├── reachability.html       # Visualisation de l'accessibilité
-├── 404.html                # Page d'erreur
-│
+├── index.html                  # Redirection / -> /preference/
+├── preference.html             # Vue Preference
+├── reachability.html           # Vue Reachability
+├── preference-fr.html          # Variante FR Preference
+├── reachability-fr.html        # Variante FR Reachability
+├── 404.html                    # Page d'erreur
 ├── _layouts/
-│   ├── landing.html        # Layout page d'accueil (header/footer keycube.io)
-│   ├── dataviz.html        # Layout visualisation 3D (Three.js)
-│   └── default.html        # Layout basique (404)
-│
+│   ├── dataviz.html            # Shell des pages interactives 3D
+│   └── default.html            # Layout minimal
 ├── _includes/
-│   ├── model-viewer.html       # Scène Three.js interactive
-│   ├── model-viewer-static.html # Scène Three.js statique (landing)
-│   └── dataviz-data.html       # Génération des données CSV → JS
-│
+│   ├── model-viewer.html       # Viewer Three.js principal
+│   ├── model-viewer-static.html# Viewer statique historique
+│   └── dataviz-data.html       # Génération des données JS depuis CSV
 ├── _data/
-│   ├── preferences.csv     # Données de préférence (22 participants)
-│   └── reachability.csv    # Données d'accessibilité (22 × 10 doigts)
-│
+│   ├── preferences.csv
+│   └── reachability.csv
 ├── assets/
 │   ├── css/
-│   │   ├── landing.css     # Styles page d'accueil
-│   │   ├── dataviz.css     # Styles visualisation
-│   │   └── default.css     # Styles de base
+│   │   ├── dataviz.css
+│   │   └── default.css
 │   ├── js/
-│   │   └── dataviz.js      # Logique UI visualisation
+│   │   └── dataviz.js
 │   └── img/
-│       ├── k3logo.png      # Logo Keycube
-│       └── favicon.png     # Favicon
-│
-└── _config.yml             # Configuration Jekyll
+├── scripts/
+│   └── build_local_site.py     # Build statique local
+└── .local_site/                # Sortie générée
 ```
 
----
+## Build local
 
-## Pages principales
+### Commandes
 
-### `/` — Page d'accueil
-- **Fichier:** `index.html`
-- **Layout:** `_layouts/landing.html`
-- **CSS:** `assets/css/landing.css`
-- **3D:** `_includes/model-viewer-static.html`
+```bash
+python3 scripts/build_local_site.py
+python3 -m http.server 4000 --directory .local_site
+```
 
-### `/preference` — Préférences
-- **Fichier:** `preference.html`
-- **Layout:** `_layouts/dataviz.html`
-- **CSS:** `assets/css/dataviz.css`
-- **JS:** `assets/js/dataviz.js`
-- **3D:** `_includes/model-viewer.html`
-- **Données:** `_data/preferences.csv`
+### Ce que fait `build_local_site.py`
 
-### `/reachability` — Accessibilité
-- **Fichier:** `reachability.html`
-- **Layout:** `_layouts/dataviz.html`
-- **CSS:** `assets/css/dataviz.css`
-- **JS:** `assets/js/dataviz.js`
-- **3D:** `_includes/model-viewer.html`
-- **Données:** `_data/reachability.csv`
+Le script:
 
----
+- lit les fichiers source HTML
+- lit les layouts et includes
+- lit les CSV de `_data/`
+- injecte les données dans le HTML final
+- copie les assets
+- génère une version directement servable dans `.local_site/`
 
-## Composants clés
+### Pourquoi ce workflow est le principal
 
-### Three.js (`_includes/model-viewer.html`)
+Il évite les problèmes de compatibilité Ruby/Bundler pour un run local simple. La structure Jekyll existe encore dans le dépôt, mais le chemin supporté pour le développement courant est le build statique Python.
 
-**Structure de la scène:**
-- Camera: `(0, 2, -5)` — vue depuis derrière le cube
-- Cube rotation: `-135°` — position diagonale (Figure 4 du paper)
-- 80 touches: 5 faces × 16 touches (grille 4×4)
+## Viewer 3D
 
-**Faces du cube:**
-| Face | Couleur | Position | Code |
-|------|---------|----------|------|
-| R | Rouge | Haut (y+1) | Top |
-| B | Bleu | z-1 | Main gauche externe |
-| Y | Jaune | x+1 | Main droite externe |
-| W | Blanc | x-1 | Main gauche interne |
-| G | Vert | z+1 | Main droite interne |
+Le viewer principal vit dans `_includes/model-viewer.html`.
 
-**API `window.updateModel(data)`:**
+Points utiles:
+
+- le cube contient 80 touches
+- les couleurs et labels sont pilotés par `window.updateModel(...)`
+- le mode `Preference` et le mode `Reachability` réutilisent le même viewer
+
+Exemple d'appel:
+
 ```javascript
-updateModel({
-  heatmap: { R: [...], B: [...], ... },  // Couleurs heatmap
+window.updateModel({
+  heatmap: { R: [...], B: [...], G: [...], W: [...], Y: [...] },
   heatmapMin: 0,
   heatmapMax: 10,
-  heatmapInvert: true,          // true = préférence (1=vert), false = reachability
-  showScores: true,             // Afficher scores sur touches
-  scores: { R: [...], ... },    // Valeurs des scores
-  isReachability: false,        // Mode reachability (ajuste taille police)
-  reset: true                   // Réinitialiser couleurs
+  heatmapInvert: true,
+  scores: { R: [...], B: [...], G: [...], W: [...], Y: [...] },
+  showScores: true,
+  isReachability: false
 });
 ```
 
-### Données (`_includes/dataviz-data.html`)
+## Données injectées au frontend
 
-**Variables JavaScript générées:**
-```javascript
-window.participantsData     // Array[22] — données de préférence par participant
-window.reachabilityData     // Object — données d'accessibilité par doigt
-```
+`_includes/dataviz-data.html` génère les variables globales utilisées côté navigateur.
 
-**Structure `participantsData[i]`:**
-```javascript
-{
-  number: 1,
-  handedness: "right",
-  circumference: 195,
-  length: 185,
-  R: [7, 8, 5, ...],  // 16 scores pour face Rouge
-  B: [...], G: [...], W: [...], Y: [...]
-}
-```
+Variables principales:
 
-**Structure `reachabilityData`:**
-```javascript
-{
-  LT: { R: [...], B: [...], ... },  // Left Thumb
-  LI: { ... },  // Left Index
-  LM: { ... },  // Left Middle
-  LR: { ... },  // Left Ring
-  LL: { ... },  // Left Little
-  RT: { ... },  // Right Thumb
-  RI: { ... },  // Right Index
-  RM: { ... },  // Right Middle
-  RR: { ... },  // Right Ring
-  RL: { ... }   // Right Little
-}
-```
+- `window.participantsData`
+- `window.reachabilityData`
+- `window.perFingerReachability`
+- `window.preferenceAggregate`
 
----
+Couplage important:
 
-## Styles CSS
+- si la structure des CSV change, il faut vérifier `_includes/dataviz-data.html`
+- si les noms des structures JS changent, il faut vérifier `assets/js/dataviz.js`
 
-### Système de couleurs
-```css
-/* Keycube.io Research color */
---accent: #43AAD6;
+## Sources de données
 
-/* Heatmap */
-/* Préférence: 1 (vert) → 10 (rouge) */
-/* Reachability: 0 (rouge) → max (vert) */
-```
+### Préférences
 
-### Classes principales
-| Classe | Usage |
-|--------|-------|
-| `.glass-panel` | Panneaux glassmorphism |
-| `.overlay-controls` | Conteneur contrôles flottants |
-| `.top-bar` | Barre supérieure (sélecteurs) |
-| `.bottom-bar` | Barre inférieure (Playdate rotation) |
-| `.side-panel` | Panneau latéral (info) |
-| `.hand-analog` | Contrôle main (Playdate style) |
-| `.finger-dot` | Bouton doigt |
+Fichier: `_data/preferences.csv`
 
-### Breakpoints responsive
-- `768px` — Tablette
-- `480px` — Mobile
+Contient:
 
----
+- métadonnées participant
+- scores par face
+- colonnes `R1..R16`, `B1..B16`, `G1..G16`, `W1..W16`, `Y1..Y16`
 
-## Modification des données
+### Reachability
 
-### Ajouter un participant
+Fichier: `_data/reachability.csv`
 
-1. Éditer `_data/preferences.csv`:
-```csv
-Number,Handedness,CircumferenceRightHand,LengthRightHand,R1,R2,...,Y16
-23,right,190,180,7,8,6,...,5
-```
+Contient des colonnes par:
 
-2. Éditer `_data/reachability.csv`:
-```csv
-Number,LT-R1,LT-R2,...,RL-Y16
-23,2,1,0,...,1
-```
+- doigt
+- face
+- index de touche
 
-### Modifier les faces
+Exemples:
 
-Dans `_includes/model-viewer.html`, tableau `faces`:
-```javascript
-const faces = [
-  { axis: 'y', sign: 1,  prefix: 'R', color: 'red' },
-  { axis: 'z', sign: -1, prefix: 'B', color: 'blue' },
-  // ...
-];
-```
+- `LT-R1`
+- `LI-B4`
+- `RM-Y12`
 
----
+## Fichiers à vérifier selon le type de changement
+
+### Changement de structure de page
+
+- `preference.html`
+- `reachability.html`
+- `_layouts/dataviz.html`
+
+### Changement de comportement
+
+- `assets/js/dataviz.js`
+- `_includes/model-viewer.html`
+
+### Changement de données
+
+- `_data/preferences.csv`
+- `_data/reachability.csv`
+- `_includes/dataviz-data.html`
+
+### Changement de style
+
+- `assets/css/dataviz.css`
+- `assets/css/default.css`
+
+## Dépendances runtime externes
+
+Chargées côté navigateur:
+
+- `https://unpkg.com/three@0.160.0/build/three.module.js`
+- `https://unpkg.com/three@0.160.0/examples/jsm/`
+
+Sans accès à `unpkg.com`, le viewer 3D ne démarre pas.
+
+## Jekyll
+
+Le dépôt contient encore:
+
+- `_layouts/`
+- `_includes/`
+- `_config.yml`
+- `Gemfile`
+
+Mais Jekyll doit être considéré comme workflow secondaire.
+
+Si tu veux quand même l'utiliser:
+
+- Ruby 3.x recommandé
+- Bundler
+- gems installables depuis `rubygems.org`
+
+Ce chemin n'est pas celui à privilégier pour la maintenance courante.
 
 ## Déploiement
 
-### GitHub Pages (automatique)
-Push sur `main` → déploiement automatique sur `keycube.github.io/heatmap3d`
+Déploiement attendu:
 
-### Local
-```bash
-bundle install
-bundle exec jekyll serve --livereload
-# http://localhost:4000/heatmap3d
-```
+- push sur `main`
+- publication GitHub Pages sur `keycube.github.io/heatmap3d`
 
----
+## Troubleshooting rapide
 
-## Dépendances externes
+### Le build local est bien généré mais les changements n'apparaissent pas
 
-| Dépendance | Version | CDN |
-|------------|---------|-----|
-| Three.js | 0.160.0 | unpkg.com |
-| OrbitControls | 0.160.0 | unpkg.com (addons) |
-| RoundedBoxGeometry | 0.160.0 | unpkg.com (addons) |
+- relancer `python3 scripts/build_local_site.py`
+- faire un hard refresh du navigateur
 
-**Import map** (dans layouts):
-```html
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
-```
+### Le viewer 3D n'apparaît pas
 
----
+- vérifier la console navigateur
+- vérifier WebGL
+- vérifier l'accès à `unpkg.com`
 
-## Troubleshooting
+### Les données affichées semblent incorrectes
 
-### Le cube ne s'affiche pas
-- Vérifier la console pour erreurs Three.js
-- Vérifier que `#model-container` existe dans le HTML
-
-### Les données ne chargent pas
-- Vérifier le format CSV (virgules, pas point-virgules)
-- Vérifier les noms de colonnes dans `dataviz-data.html`
-
-### Les tooltips sont cachés
-- Vérifier `z-index` dans dataviz.css
-- `.hand-divider` doit avoir `z-index: 10`
-- `:hover` doit avoir `z-index: 100`
-
-### Le site ne se déploie pas
-- Vérifier GitHub Actions dans l'onglet Actions
-- Vérifier `baseurl: "/heatmap3d"` dans `_config.yml`
+- vérifier les colonnes CSV
+- vérifier `_includes/dataviz-data.html`
+- vérifier `assets/js/dataviz.js`

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="baseurl" content="">
+  <meta name="default-mode" content="preference">
+  <title>Preference – Keycube Heatmap 3D</title>
+  <link rel="stylesheet" href="/assets/css/dataviz.css">
+  <link rel="icon" href="/assets/img/favicon.png" type="image/x-icon">
+</head>
+<body>
+  <a href="/" class="nav-link">← Home</a>
+
+<!-- Full-screen 3D viewer -->
+<div id="model-container"></div>
+
+<!-- Floating overlay controls -->
+<div class="overlay-controls">
+
+  <!-- ── Top bar: participant select + face buttons ── -->
+  <div class="top-bar">
+    <select id="participant-select">
+      <option value="">Choose a participant...</option>
+      <option value="aggregate">📊 Aggregate Study View (22 participants)</option>
+        <option value="0">
+          P1 (Right, span 204mm)
+        </option>
+        <option value="1">
+          P2 (Right, span 207mm)
+        </option>
+        <option value="2">
+          P3 (Right, span 201mm)
+        </option>
+        <option value="3">
+          P4 (Right, span 204mm)
+        </option>
+        <option value="4">
+          P5 (Right, span 226mm)
+        </option>
+        <option value="5">
+          P6 (Right, span 211mm)
+        </option>
+        <option value="6">
+          P7 (Left, span 200mm)
+        </option>
+        <option value="7">
+          P8 (Left, span 198mm)
+        </option>
+        <option value="8">
+          P9 (Right, span 215mm)
+        </option>
+        <option value="9">
+          P10 (Right, span 205mm)
+        </option>
+        <option value="10">
+          P11 (Right, span 185mm)
+        </option>
+        <option value="11">
+          P12 (Right, span 201mm)
+        </option>
+        <option value="12">
+          P13 (Right, span 185mm)
+        </option>
+        <option value="13">
+          P14 (Right, span 185mm)
+        </option>
+        <option value="14">
+          P15 (Right, span 178mm)
+        </option>
+        <option value="15">
+          P16 (Right, span 218mm)
+        </option>
+        <option value="16">
+          P17 (Right, span 203mm)
+        </option>
+        <option value="17">
+          P18 (Right, span 243mm)
+        </option>
+        <option value="18">
+          P19 (Right, span 197mm)
+        </option>
+        <option value="19">
+          P20 (Right, span 198mm)
+        </option>
+        <option value="20">
+          P21 (Right, span 231mm)
+        </option>
+        <option value="21">
+          P22 (Right, span 196mm)
+        </option>
+    </select>
+
+    <div class="face-buttons glass-panel" id="preference-face-buttons" style="padding: 6px 10px;">
+      <button class="color-btn" data-color="R" style="background: #ff6b6b; color: white;">R</button>
+      <button class="color-btn" data-color="B" style="background: #4dabf7; color: white;">B</button>
+      <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">G</button>
+      <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">W</button>
+      <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">Y</button>
+      <button class="reset-btn" style="background: #868e96; color: white;">All</button>
+    </div>
+  </div>
+
+  <!-- ── Bottom bar: badge + legend + reset view ── -->
+  <div class="bottom-bar">
+    <div class="selection-badge" id="selection-badge">
+      <span class="selection-icon" id="selection-icon">🎯</span>
+      <span class="selection-text" id="selection-text">No participant selected</span>
+    </div>
+
+    <div class="heatmap-legend" id="preference-heatmap-legend">
+      <span>Low confidence</span>
+      <div class="heatmap-gradient"></div>
+      <span>High confidence</span>
+    </div>
+
+    <div class="finger-preference-legend glass-panel hidden" id="finger-preference-legend">
+      <div class="finger-legend-header">
+        <span></span>
+        <span>Left</span>
+        <span>Right</span>
+      </div>
+      <div class="finger-legend-row">
+        <span>Thumb</span>
+        <span class="finger-swatch finger-swatch-lt"></span>
+        <span class="finger-swatch finger-swatch-rt"></span>
+      </div>
+      <div class="finger-legend-row">
+        <span>Index</span>
+        <span class="finger-swatch finger-swatch-li"></span>
+        <span class="finger-swatch finger-swatch-ri"></span>
+      </div>
+      <div class="finger-legend-row">
+        <span>Middle</span>
+        <span class="finger-swatch finger-swatch-lm"></span>
+        <span class="finger-swatch finger-swatch-rm"></span>
+      </div>
+      <div class="finger-legend-row">
+        <span>Ring</span>
+        <span class="finger-swatch finger-swatch-lr"></span>
+        <span class="finger-swatch finger-swatch-rr"></span>
+      </div>
+      <div class="finger-legend-row">
+        <span>Little</span>
+        <span class="finger-swatch finger-swatch-ll"></span>
+        <span class="finger-swatch finger-swatch-rl"></span>
+      </div>
+    </div>
+
+    <button class="reset-view-btn" id="reset-view-btn">↻ Reset View</button>
+  </div>
+
+</div>
+
+<!-- Side panel toggle -->
+<button class="side-panel-toggle" onclick="document.getElementById('info-panel').classList.toggle('hidden')">ℹ️ Info</button>
+
+<!-- Side panel -->
+<div id="info-panel" class="side-panel glass-panel hidden">
+
+  <h4>Selection</h4>
+  <div id="mode-description">
+    <p>Select <strong>Aggregate</strong> to view the paper's finger-to-key preference confidence ratio, or inspect a participant's raw finger-choice coding.</p>
+  </div>
+
+  <!-- Participant summary (hidden until selection) -->
+  <div id="participant-summary" style="display: none;">
+    <h4>Participant</h4>
+    <p><strong>Handedness:</strong> <span id="summary-handedness"></span></p>
+    <p><strong>Circumference:</strong> <span id="summary-circumference"></span> mm</p>
+    <p><strong>Length:</strong> <span id="summary-length"></span> mm</p>
+    <p><strong>Span:</strong> <span id="summary-span"></span> mm</p>
+  </div>
+
+  <h4>Study Info</h4>
+  <div class="study-info">
+    <div class="study-stat-grid">
+      <div class="study-stat-item"><strong>31</strong>Study 1</div>
+      <div class="study-stat-item"><strong>22</strong>Study 2</div>
+      <div class="study-stat-item"><strong>77.4%</strong>Diagonal</div>
+      <div class="study-stat-item"><strong>80</strong>Keys</div>
+    </div>
+    <p><strong>Study 1:</strong> Identified preferred holding positions. Diagonal chosen by 77.4%.</p>
+    <p><strong>Study 2:</strong> Aggregate mode shows the dominant finger selection ratio per key from Figure 6.</p>
+    <p>Color scale: <span style="color:#ff6b6b">Red</span> (low confidence) → <span style="color:#ffd43b">Yellow</span> → <span style="color:#51cf66">Green</span> (high confidence).</p>
+    <p>Faces: <span style="color:#ff6b6b">Red</span> (top), <span style="color:#4dabf7">Blue</span> &amp; <span style="color:#ffd43b">Yellow</span> (external), <span style="color:#f8f9fa;background:#333;padding:0 4px;border-radius:2px;">White</span> &amp; <span style="color:#51cf66">Green</span> (internal).</p>
+  </div>
+
+</div>
+  <!-- Three.js import map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+// Scene Setup
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#ffffff');
+
+// Camera — slightly above center, looking at the cube from behind.
+// User stands BEHIND the cube, sees Yellow (right hand) on left, Blue (left hand) on right.
+const camera = new THREE.PerspectiveCamera(25, 1, 0.1, 1000);
+camera.position.set(0, 2, -5);
+const initialCameraPosition = camera.position.clone();
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+const maxPixelRatio = 2.5;
+const renderPixelRatio = Math.min(window.devicePixelRatio || 1, maxPixelRatio);
+const container = document.getElementById('model-container');
+if (container) {
+  renderer.setPixelRatio(renderPixelRatio);
+  renderer.setSize(container.offsetWidth, container.offsetHeight);
+  container.appendChild(renderer.domElement);
+  camera.aspect = container.offsetWidth / container.offsetHeight;
+} else {
+  renderer.setPixelRatio(renderPixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+  camera.aspect = window.innerWidth / window.innerHeight;
+}
+camera.updateProjectionMatrix();
+renderer.domElement.style.touchAction = 'none';
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const maxTextureAnisotropy = renderer.capabilities.getMaxAnisotropy();
+
+// Controls — smooth rotation like Playdate
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;  // Slightly stronger inertia keeps movement deliberate
+controls.rotateSpeed = 0.42;    // Make face changes possible, but not too immediate
+
+// Keep the interaction object-centric: orbit only, with a tightly bounded zoom.
+controls.enablePan = false;
+const fixedDistance = camera.position.length();
+controls.enableZoom = true;
+controls.zoomSpeed = 0.85;
+controls.minDistance = fixedDistance * 0.82;
+controls.maxDistance = fixedDistance * 1.12;
+
+// Keep the cube upright while leaving every exposed face reachable.
+controls.minPolarAngle = Math.PI * 0.12;  // close enough to inspect the top face
+controls.maxPolarAngle = Math.PI * 0.88;  // low enough to inspect side faces comfortably
+
+// Auto-rotation settings (integrated with OrbitControls)
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.0;  // Slow rotation (degrees per second)
+let autoRotateResumeTimer = null;
+let autoRotateLocked = false;
+
+function pauseAutoRotate() {
+  if (autoRotateLocked) return;
+  controls.autoRotate = false;
+  if (autoRotateResumeTimer) clearTimeout(autoRotateResumeTimer);
+  autoRotateResumeTimer = setTimeout(() => {
+    controls.autoRotate = true;
+  }, 2400);
+}
+
+function captureViewerGesture(event) {
+  event.preventDefault();
+  pauseAutoRotate();
+}
+
+renderer.domElement.addEventListener('wheel', captureViewerGesture, { passive: false });
+renderer.domElement.addEventListener('touchmove', captureViewerGesture, { passive: false });
+renderer.domElement.addEventListener('gesturestart', captureViewerGesture, { passive: false });
+renderer.domElement.addEventListener('gesturechange', captureViewerGesture, { passive: false });
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(5, 5, 5);
+scene.add(ambientLight, directionalLight);
+
+// Main cube
+const cubeGeometry = new RoundedBoxGeometry(1, 1, 1, 4, 0.1);
+const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xD2B48C });
+const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+// Keycube group
+const keycubeGroup = new THREE.Group();
+keycubeGroup.add(cube);
+
+// Key configuration
+const keySize = 0.15;
+const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize);
+const spacing = 0.20;
+const offset = 0.5;
+
+// Face layout — keyed to the paper's Figure 6 numbering on each face.
+const faces = [
+  { axis: 'y', sign: 1,  prefix: 'R', color: 'red',    colAxis: 'x', colSign: 1,  rowAxis: 'z', rowSign: 1 },
+  { axis: 'z', sign: -1, prefix: 'B', color: 'blue',   colAxis: 'x', colSign: 1,  rowAxis: 'y', rowSign: 1 },
+  { axis: 'x', sign: 1,  prefix: 'Y', color: 'yellow', colAxis: 'y', colSign: -1, rowAxis: 'z', rowSign: 1 },
+  { axis: 'x', sign: -1, prefix: 'W', color: 'white',  colAxis: 'y', colSign: 1,  rowAxis: 'z', rowSign: 1 },
+  { axis: 'z', sign: 1,  prefix: 'G', color: 'green',  colAxis: 'x', colSign: 1,  rowAxis: 'y', rowSign: -1 }
+];
+
+const faceByPrefix = Object.fromEntries(faces.map(face => [face.prefix, face]));
+
+const preferenceFigurePalette = {
+  LL: { low: '#a5c0c6', high: '#275a66' },
+  LR: { low: '#c2d5d8', high: '#688c97' },
+  LM: { low: '#d1e0e3', high: '#8aa8b0' },
+  LI: { low: '#dee9eb', high: '#aec6cb' },
+  LT: { low: '#eef6f7', high: '#b8d3d9' },
+  RT: { low: '#f7eef2', high: '#e0c2cf' },
+  RI: { low: '#f1dee7', high: '#d3afc1' },
+  RM: { low: '#e8cdd9', high: '#bc8ba3' },
+  RR: { low: '#ddb9cc', high: '#a56784' },
+  RL: { low: '#cfa0b8', high: '#7c2f52' }
+};
+
+const aggregatePreferenceRange = { min: 0.41, max: 1.0 };
+const preferenceFigureTextureCache = new Map();
+
+// Orient a plane to face outward from a surface
+function orientPlane(mesh, axis, sign) {
+  if (axis === 'y') mesh.rotation.x = sign > 0 ? -Math.PI / 2 : Math.PI / 2;
+  else if (axis === 'x') mesh.rotation.y = sign > 0 ? Math.PI / 2 : -Math.PI / 2;
+  else if (sign < 0) mesh.rotation.y = Math.PI;
+}
+
+// Create a label plane with canvas texture
+function createLabelPlane(size, canvasSize, axis, sign) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = canvasSize;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.anisotropy = Math.min(8, maxTextureAnisotropy);
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(size, size),
+    new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: true, depthWrite: false })
+  );
+  orientPlane(mesh, axis, sign);
+  return { mesh, canvas, texture };
+}
+
+// Create text label as a small plane decal stuck on the key surface
+function createTextLabel(text, axis, sign) {
+  const { mesh, canvas, texture } = createLabelPlane(0.13, 512, axis, sign);
+  const ctx = canvas.getContext('2d');
+  ctx.font = 'bold 224px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+  ctx.lineWidth = 16;
+  ctx.strokeText(text, 256, 256);
+  ctx.fillStyle = 'white';
+  ctx.fillText(text, 256, 256);
+  texture.needsUpdate = true;
+  mesh.userData = { isLabel: true };
+  return mesh;
+}
+
+// Create dynamic score label (initially hidden)
+function createScoreLabel(axis, sign) {
+  const { mesh, canvas, texture } = createLabelPlane(0.14, 1024, axis, sign);
+  mesh.userData = { isScoreLabel: true, canvas, texture };
+  mesh.visible = false;
+  return mesh;
+}
+
+// Track current mode for score formatting
+let isReachabilityMode = false;
+let currentScoreFormat = 'integer';
+
+// Update score label text - shows both key ID and score
+function updateScoreLabelText(mesh, score, keyID) {
+  const { canvas, texture } = mesh.userData;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 1024, 1024);
+  
+  // Draw key ID
+  ctx.font = 'bold 224px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 24;
+  ctx.strokeText(keyID, 512, 300);
+  ctx.fillStyle = '#FFFF00';
+  ctx.fillText(keyID, 512, 300);
+  
+  // Draw score
+  const scoreText = currentScoreFormat === 'ratio'
+    ? (score === 1 ? '1' : String(score).replace(/^0/, ''))
+    : String(Math.round(score));
+  const fontSize = currentScoreFormat === 'ratio'
+    ? 356
+    : (isReachabilityMode && score >= 100 ? 284 : 400);
+  ctx.font = `bold ${fontSize}px Arial`;
+  ctx.lineWidth = 28;
+  ctx.strokeText(scoreText, 512, 700);
+  ctx.fillStyle = 'white';
+  ctx.fillText(scoreText, 512, 700);
+  
+  texture.needsUpdate = true;
+  mesh.visible = true;
+}
+
+// Store score labels for each key
+const scoreLabels = {};
+
+// Helper to calculate label position
+function getGridValue(index, sign) {
+  return (index - 1.5) * spacing * sign;
+}
+
+function getLabelPosition(face, row, col, lift) {
+  const pos = { x: 0, y: 0, z: 0 };
+  pos[face.axis] = (offset + lift) * face.sign;
+  pos[face.colAxis] = getGridValue(col, face.colSign);
+  pos[face.rowAxis] = getGridValue(row, face.rowSign);
+  return pos;
+}
+
+function toLinearColor(hex) {
+  return new THREE.Color(hex).convertSRGBToLinear();
+}
+
+function lerpHexColor(startHex, endHex, t) {
+  return toLinearColor(startHex).lerp(toLinearColor(endHex), t);
+}
+
+function getPreferenceFigureColor(fingerCode, score) {
+  const palette = preferenceFigurePalette[fingerCode] || preferenceFigurePalette.LT;
+  const t = THREE.MathUtils.clamp(
+    (score - aggregatePreferenceRange.min) / (aggregatePreferenceRange.max - aggregatePreferenceRange.min),
+    0,
+    1
+  );
+  return lerpHexColor(palette.low, palette.high, t);
+}
+
+function createPreferenceFigureTexture(keyID, colors) {
+  const cacheKey = `${keyID}:${colors.join('|')}`;
+  if (preferenceFigureTextureCache.has(cacheKey)) return preferenceFigureTextureCache.get(cacheKey);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+
+  if (colors.length === 1) {
+    ctx.fillStyle = colors[0];
+    ctx.fillRect(0, 0, 256, 256);
+  } else {
+    ctx.fillStyle = colors[0];
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(256, 0);
+    ctx.lineTo(0, 256);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = colors[1];
+    ctx.beginPath();
+    ctx.moveTo(256, 0);
+    ctx.lineTo(256, 256);
+    ctx.lineTo(0, 256);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.anisotropy = Math.min(8, maxTextureAnisotropy);
+  preferenceFigureTextureCache.set(cacheKey, texture);
+  return texture;
+}
+
+// Create keys
+faces.forEach((face) => {
+  const { axis, sign, prefix, color } = face;
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 4; col++) {
+      const key = new THREE.Mesh(keyGeometry, new THREE.MeshStandardMaterial({ color }));
+      const keyIndex = row * 4 + col + 1;
+      const keyID = `${prefix}${keyIndex}`;
+      
+      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis, sign, gridRow: row, gridCol: col };
+      key.name = keyID;
+      
+      const pos = getLabelPosition(face, row, col, 0);
+      key.position.set(pos.x, pos.y, pos.z);
+      key.userData.originalPosition = key.position.clone();
+      keycubeGroup.add(key);
+
+      // Add text label
+      const label = createTextLabel(keyID, axis, sign);
+      label.userData.parentKeyId = keyID;
+      const labelPos = getLabelPosition(face, row, col, 0.078);
+      label.position.set(labelPos.x, labelPos.y, labelPos.z);
+      label.userData.originalPosition = label.position.clone();
+      keycubeGroup.add(label);
+
+      // Add score label (hidden by default)
+      const scoreLabel = createScoreLabel(axis, sign);
+      scoreLabel.userData.parentKeyId = keyID;
+      const scorePos = getLabelPosition(face, row, col, 0.079);
+      scoreLabel.position.set(scorePos.x, scorePos.y, scorePos.z);
+      scoreLabel.userData.originalPosition = scoreLabel.position.clone();
+      keycubeGroup.add(scoreLabel);
+      scoreLabels[keyID] = scoreLabel;
+    }
+  }
+});
+
+// ─── Diagonal holding position (Figure 4, left photo) ───
+keycubeGroup.rotation.y = -Math.PI * 3 / 4;  // -135° to show G and W faces
+const DIAGONAL_ROTATION = -Math.PI * 3 / 4;
+
+// ─── Auto-rotation control ───
+['pointerdown', 'wheel', 'touchstart'].forEach(evt => 
+  renderer.domElement.addEventListener(evt, pauseAutoRotate)
+);
+
+// ─── Orbit pivot ───
+controls.target.set(0, 0, 0);
+const initialControlsTarget = controls.target.clone();
+
+scene.add(keycubeGroup);
+
+// Animation loop
+(function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+// Window resize handler
+function handleResize() {
+  const c = document.getElementById('model-container');
+  const w = c ? c.offsetWidth : window.innerWidth;
+  const h = c ? c.offsetHeight : window.innerHeight;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+window.addEventListener('resize', handleResize);
+window.addEventListener('orientationchange', () => setTimeout(handleResize, 100));
+
+// Update model function
+window.updateModel = function(data) {
+  console.log('Updating model with data:', data);
+  
+  if (data.handedness) {
+    keycubeGroup.scale.x = data.handedness === 'left' ? -1 : 1;
+  }
+
+  if (data.reset) {
+    // Reset all colors and positions to original
+    keycubeGroup.children.forEach(child => {
+      if (child.userData?.originalColor) {
+        child.material.color.set(child.userData.originalColor);
+        child.material.emissive?.set(0x000000);
+        child.material.map = null;
+        child.material.needsUpdate = true;
+        child.scale.set(1, 1, 1);
+        if (child.userData.originalPosition) {
+          child.position.copy(child.userData.originalPosition);
+        }
+      } else if (child.userData?.isLabel) {
+        child.visible = true; // Show text labels on reset
+        if (child.userData.originalPosition) {
+          child.position.copy(child.userData.originalPosition);
+        }
+      } else if (child.userData?.isScoreLabel) {
+        child.visible = false; // Hide score labels on reset
+      }
+    });
+    // Reset cube scale
+    keycubeGroup.scale.setScalar(1);
+    keycubeGroup.scale.x = 1;
+    // Preserve diagonal holding rotation (never reset it)
+    keycubeGroup.rotation.set(0, DIAGONAL_ROTATION, 0);
+    return;
+  }
+
+  // Show/hide score labels
+  if (data.showScores !== undefined) {
+    Object.values(scoreLabels).forEach(l => l.visible = data.showScores);
+    keycubeGroup.children.forEach(c => {
+      if (c.userData?.isLabel) c.visible = !data.showScores;
+    });
+  }
+
+  if (data.isReachability !== undefined) isReachabilityMode = data.isReachability;
+  if (data.scoreFormat !== undefined) currentScoreFormat = data.scoreFormat;
+
+  // Update score values
+  if (data.scores) {
+    ['R', 'B', 'G', 'W', 'Y'].forEach(face => {
+      data.scores[face]?.forEach((score, idx) => {
+        const label = scoreLabels[`${face}${idx + 1}`];
+        if (label) updateScoreLabelText(label, score, `${face}${idx + 1}`);
+      });
+    });
+  }
+
+  // Hide scores and restore text labels
+  if (data.hideScores) {
+    Object.values(scoreLabels).forEach(l => l.visible = false);
+    keycubeGroup.children.forEach(c => {
+      if (c.userData?.isLabel) c.visible = true;
+    });
+  }
+  
+  if (data.wireframe !== undefined) {
+    scene.traverse(c => { if (c.isMesh && !c.userData?.isLabel) c.material.wireframe = data.wireframe; });
+  }
+
+  if (data.backgroundColor) renderer.setClearColor(data.backgroundColor);
+
+  if (data.resetView) {
+    camera.position.copy(initialCameraPosition);
+    controls.target.copy(initialControlsTarget);
+    autoRotateLocked = false;
+    controls.autoRotate = true;
+    if (autoRotateResumeTimer) clearTimeout(autoRotateResumeTimer);
+    camera.zoom = 1;
+    camera.updateProjectionMatrix();
+    controls.update();
+  }
+
+  if (data.lightingIntensity !== undefined) directionalLight.intensity = data.lightingIntensity;
+
+  // Heatmap color: invert=true → low=green (preference), invert=false → high=green (reachability)
+  const heatmapColor = (norm, invert) => new THREE.Color().setHSL((invert ? 1 - norm : norm) * 0.33, 0.9, 0.5);
+
+  const applyPreferenceFigure = (figureData, singleFace) => {
+    keycubeGroup.children.forEach(child => {
+      if (!child.userData?.face || !child.userData?.index) return;
+
+      const face = child.userData.face;
+      const faceData = figureData.scores[face];
+      if (!faceData) {
+        child.material.color.set(child.userData.originalColor);
+        child.material.emissive?.set(0x000000);
+        child.material.map = null;
+        child.material.needsUpdate = true;
+        return;
+      }
+
+      const shouldDim = singleFace && face !== singleFace;
+      if (shouldDim) {
+        child.material.color.copy(toLinearColor('#eceff1'));
+        child.material.emissive?.set(toLinearColor('#dfe5e8'));
+        child.material.map = null;
+        child.material.needsUpdate = true;
+        return;
+      }
+
+      const score = figureData.scores[face][child.userData.index - 1];
+      const tiedFingers = figureData.tiedFingers[face][child.userData.index - 1];
+      const textureColors = tiedFingers.map(function (fingerCode) {
+        return `#${getPreferenceFigureColor(fingerCode, score).convertLinearToSRGB().getHexString()}`;
+      });
+      const averageColor = tiedFingers
+        .map(fingerCode => getPreferenceFigureColor(fingerCode, score))
+        .reduce((acc, color, index, arr) => acc.add(color.clone().multiplyScalar(1 / arr.length)), new THREE.Color(0, 0, 0));
+
+      const splitTexture = textureColors.length > 1 ? createPreferenceFigureTexture(child.userData.id, textureColors) : null;
+      child.material.map = splitTexture;
+      child.material.color.copy(splitTexture ? toLinearColor('#ffffff') : averageColor);
+      child.material.emissive?.copy(averageColor.clone().multiplyScalar(splitTexture ? 0.18 : 0.42));
+      child.material.needsUpdate = true;
+    });
+  };
+
+  // Apply heatmap to keys
+  const applyHeatmap = (heatmapData, min, max, invert, dimOthers) => {
+    const range = max - min || 1;
+    keycubeGroup.children.forEach(child => {
+      if (!child.userData?.face || !child.userData?.index) return;
+      child.scale.set(1, 1, 1);
+      if (heatmapData[child.userData.face]) {
+        const val = heatmapData[child.userData.face][child.userData.index - 1];
+        child.material.color.set(heatmapColor(Math.max(0, Math.min(1, (val - min) / range)), invert));
+      } else if (dimOthers) {
+        child.material.color.set(new THREE.Color(child.userData.originalColor).multiplyScalar(0.3));
+      } else if (child.userData.originalColor) {
+        child.material.color.set(child.userData.originalColor);
+      }
+    });
+  };
+
+  if (data.heatmap) {
+    applyHeatmap(data.heatmap, data.heatmapMin ?? 0, data.heatmapMax ?? 1, !!data.heatmapInvert, false);
+  }
+  if (data.heatmapSingleFace) {
+    applyHeatmap(data.heatmapSingleFace, data.heatmapMin ?? 0, data.heatmapMax ?? 1, !!data.heatmapInvert, true);
+  }
+  if (data.preferenceFigure) {
+    applyPreferenceFigure(data.preferenceFigure, data.preferenceFigureSingleFace || null);
+  }
+
+  if (data.figure6View) {
+    autoRotateLocked = false;
+    controls.autoRotate = true;
+  } else if (data.figure6View === false) {
+    autoRotateLocked = false;
+    controls.autoRotate = true;
+  }
+};
+</script>
+
+  <script>
+window.participantsData = [{"number":1,"handedness":"right","circumferenceLeft":205,"circumferenceRight":214,"lengthLeft":198,"lengthRight":200,"spanLeft":203,"spanRight":204,"R":[5,5,5,6,5,5,6,6,5,6,6,6,6,6,6,6],"B":[1,2,2,2,3,3,3,3,4,4,3,3,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,8,9,7,8,8,9,7,7,9,9,7,7,8,10]},{"number":2,"handedness":"right","circumferenceLeft":186,"circumferenceRight":184,"lengthLeft":175,"lengthRight":175,"spanLeft":207,"spanRight":207,"R":[5,5,5,6,5,5,6,6,5,5,6,6,5,6,6,6],"B":[1,2,2,3,3,3,3,2,4,4,3,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,8,8,7,8,8,9,7,8,8,6,8,8,8,10]},{"number":3,"handedness":"right","circumferenceLeft":179,"circumferenceRight":180,"lengthLeft":183,"lengthRight":184,"spanLeft":202,"spanRight":201,"R":[5,5,5,6,5,5,6,6,5,6,6,6,5,6,6,6],"B":[4,4,4,3,4,4,4,4,4,4,4,4,4,4,4,4],"G":[6,6,6,6,5,6,6,6,6,6,6,6,6,6,6,6],"W":[5,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,7,7,8,7,7,8,8,7,7,7,8,8,8,8,8]},{"number":4,"handedness":"right","circumferenceLeft":195,"circumferenceRight":199,"lengthLeft":187,"lengthRight":190,"spanLeft":200,"spanRight":204,"R":[5,5,4,6,5,5,6,6,5,6,6,6,6,6,6,6],"B":[2,3,2,2,3,3,3,3,4,4,4,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,7,8,8,7,7,8,8,7,7,8,8,7,7,8,9]},{"number":5,"handedness":"right","circumferenceLeft":200,"circumferenceRight":207,"lengthLeft":182,"lengthRight":183,"spanLeft":221,"spanRight":226,"R":[5,5,5,5,5,5,6,6,5,5,6,6,5,6,6,6],"B":[2,2,2,3,3,3,3,3,5,4,3,4,4,4,4,4],"G":[6,6,6,6,5,5,6,6,6,5,6,6,5,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,7,8,9,7,7,8,9,7,7,8,9,7,8,8,9]},{"number":6,"handedness":"right","circumferenceLeft":190,"circumferenceRight":192,"lengthLeft":179,"lengthRight":177,"spanLeft":214,"spanRight":211,"R":[5,5,5,5,5,5,6,6,5,5,6,6,6,6,6,6],"B":[2,2,3,3,3,3,3,3,4,4,4,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,8,9,7,8,8,9,7,7,9,9,7,8,9,10]},{"number":7,"handedness":"left","circumferenceLeft":182,"circumferenceRight":179,"lengthLeft":173,"lengthRight":173,"spanLeft":187,"spanRight":200,"R":[5,5,6,7,5,5,6,7,5,6,6,6,5,6,6,6],"B":[1,2,1,2,3,3,3,3,3,3,3,3,3,4,3,7],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,10],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,7,9,10,7,7,9,9,7,7,9,10,7,8,10,10]},{"number":8,"handedness":"left","circumferenceLeft":194,"circumferenceRight":194,"lengthLeft":180,"lengthRight":180,"spanLeft":198,"spanRight":198,"R":[5,5,5,6,5,5,6,6,5,6,6,6,6,6,6,6],"B":[1,1,2,3,3,3,2,3,4,3,4,4,4,4,4,4],"G":[6,6,6,6,6,6,6,5,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,4,5,6,5,5,5,6,6,5,6],"Y":[7,8,8,9,7,7,8,9,7,7,8,9,7,7,8,9]},{"number":9,"handedness":"right","circumferenceLeft":204,"circumferenceRight":210,"lengthLeft":192,"lengthRight":184,"spanLeft":218,"spanRight":215,"R":[5,3,6,4,5,5,6,6,5,6,6,6,6,6,6,6],"B":[2,1,2,2,2,2,2,2,3,3,3,3,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,8,8,7,8,8,9,7,8,9,9,7,8,10,10]},{"number":10,"handedness":"right","circumferenceLeft":198,"circumferenceRight":196,"lengthLeft":198,"lengthRight":198,"spanLeft":213,"spanRight":205,"R":[5,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"B":[2,2,2,2,2,2,2,3,3,2,4,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,7,8,9,7,8,8,9,7,7,9,9,7,7,9,9]},{"number":11,"handedness":"right","circumferenceLeft":172,"circumferenceRight":172,"lengthLeft":167,"lengthRight":170,"spanLeft":189,"spanRight":185,"R":[5,5,5,4,5,5,6,6,5,5,6,6,6,6,6,6],"B":[1,3,2,3,2,2,4,3,4,4,4,4,4,4,4,4],"G":[5,6,6,6,6,6,6,6,6,5,9,10,6,6,9,10],"W":[1,3,3,4,1,3,5,5,1,1,5,5,1,5,5,5],"Y":[7,3,8,8,7,7,8,9,7,7,8,9,7,7,10,10]},{"number":12,"handedness":"right","circumferenceLeft":180,"circumferenceRight":183,"lengthLeft":174,"lengthRight":176,"spanLeft":207,"spanRight":201,"R":[5,5,5,5,5,7,6,6,5,5,6,6,6,6,6,6],"B":[4,4,4,4,4,3,4,4,4,4,4,4,4,4,4,4],"G":[5,6,6,6,6,6,6,6,5,6,6,6,6,6,6,6],"W":[5,5,5,4,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,7,7,7,7,7,7,8,7,7,7,7,7,7,7,7]},{"number":13,"handedness":"right","circumferenceLeft":173,"circumferenceRight":176,"lengthLeft":164,"lengthRight":162,"spanLeft":187,"spanRight":185,"R":[5,5,5,6,5,5,6,6,5,5,6,6,6,6,6,6],"B":[2,2,3,3,4,3,3,3,5,4,4,4,4,4,4,5],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,9],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,7,8,8,7,7,8,9,7,7,8,8,7,7,8,9]},{"number":14,"handedness":"right","circumferenceLeft":186,"circumferenceRight":187,"lengthLeft":175,"lengthRight":174,"spanLeft":183,"spanRight":185,"R":[5,5,6,5,5,5,6,6,5,5,6,6,6,6,6,6],"B":[5,2,4,4,4,4,4,3,3,3,3,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,10,9,6,6],"W":[4,5,5,5,5,5,5,5,5,5,5,5,1,5,5,5],"Y":[7,7,8,8,6,7,8,9,7,8,7,8,6,7,8,10]},{"number":15,"handedness":"right","circumferenceLeft":200,"circumferenceRight":201,"lengthLeft":179,"lengthRight":178,"spanLeft":180,"spanRight":178,"R":[5,5,5,4,5,5,6,6,5,5,6,6,5,6,6,6],"B":[1,3,2,2,3,4,3,3,3,4,3,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,10],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,8,9,7,8,9,8,7,8,8,9,7,6,8,10]},{"number":16,"handedness":"right","circumferenceLeft":211,"circumferenceRight":211,"lengthLeft":195,"lengthRight":197,"spanLeft":224,"spanRight":218,"R":[5,5,5,7,5,5,6,6,5,5,6,6,6,6,6,6],"B":[2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,5,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,7,8,9,7,7,8,8,7,7,7,8,7,7,8,8]},{"number":17,"handedness":"right","circumferenceLeft":182,"circumferenceRight":182,"lengthLeft":176,"lengthRight":181,"spanLeft":207,"spanRight":203,"R":[5,5,5,6,5,5,6,6,5,6,6,6,6,6,6,6],"B":[2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,6,5,5,6],"Y":[7,7,8,8,7,7,8,9,7,7,9,9,7,8,7,9]},{"number":18,"handedness":"right","circumferenceLeft":200,"circumferenceRight":204,"lengthLeft":204,"lengthRight":200,"spanLeft":241,"spanRight":243,"R":[5,5,5,7,5,5,6,6,5,6,6,6,6,6,6,6],"B":[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,9,10,7,8,9,10,7,8,9,10,7,8,9,10]},{"number":19,"handedness":"right","circumferenceLeft":179,"circumferenceRight":180,"lengthLeft":176,"lengthRight":177,"spanLeft":202,"spanRight":197,"R":[4,4,4,8,4,4,7,7,5,6,7,7,4,6,6,5],"B":[1,1,2,2,3,2,3,3,3,4,3,3,4,4,3,3],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,4,5,5,3,5,5,5,5,5,5,5,5,5],"Y":[7,8,8,9,7,8,9,10,7,8,9,10,7,6,7,10]},{"number":20,"handedness":"right","circumferenceLeft":183,"circumferenceRight":188,"lengthLeft":173,"lengthRight":173,"spanLeft":213,"spanRight":198,"R":[5,5,5,6,5,5,6,6,5,5,6,6,5,6,6,6],"B":[3,1,2,2,2,3,3,3,5,3,3,3,5,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,8,9,7,8,8,9,7,7,9,9,7,8,6,6]},{"number":21,"handedness":"right","circumferenceLeft":224,"circumferenceRight":223,"lengthLeft":201,"lengthRight":199,"spanLeft":231,"spanRight":231,"R":[5,5,5,5,5,5,5,6,5,5,6,6,5,6,6,6],"B":[1,1,1,1,2,2,2,2,3,3,3,3,5,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,9,10,7,8,9,10,7,8,9,10,7,8,9,10]},{"number":22,"handedness":"right","circumferenceLeft":191,"circumferenceRight":193,"lengthLeft":165,"lengthRight":166,"spanLeft":200,"spanRight":196,"R":[5,5,5,7,5,5,5,6,5,5,6,6,6,6,6,6],"B":[2,2,2,2,4,3,3,3,3,5,4,4,4,4,4,4],"G":[6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6],"W":[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5],"Y":[7,8,8,9,7,7,8,9,7,8,8,9,7,8,8,9]}];
+window.reachabilityData = [{"number":1,"R":[3,4,4,2,4,6,6,4,4,3,6,3,4,4,3,3],"B":[3,7,7,7,2,5,9,9,1,1,6,6,1,3,4,4],"G":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"W":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"Y":[3,3,7,9,3,3,7,7,4,3,2,7,1,0,1,1]},{"number":2,"R":[3,3,1,1,3,3,0,1,3,6,4,3,4,4,3,3],"B":[2,4,10,8,0,7,12,8,1,4,7,8,1,0,4,6],"G":[3,3,3,0,1,1,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,1,0,0,0,1,0,0,0,1,0,1,1,1],"Y":[1,2,4,6,3,3,4,9,3,4,2,5,1,0,0,4]},{"number":3,"R":[3,3,3,1,3,3,4,2,4,4,6,4,2,4,4,3],"B":[1,3,9,8,1,10,12,10,1,7,9,9,1,3,3,4],"G":[1,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0],"W":[0,0,0,0,0,0,0,3,1,1,1,3,1,3,3,3],"Y":[4,6,7,7,4,6,9,12,4,3,7,10,1,1,2,3]},{"number":4,"R":[3,1,0,0,3,1,0,0,4,2,1,1,6,3,3,3],"B":[0,1,10,12,0,1,8,10,0,1,3,6,0,3,4,4],"G":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1],"W":[1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"Y":[3,6,10,10,4,6,8,8,4,4,5,4,0,1,1,0]},{"number":5,"R":[4,4,4,6,6,6,6,6,6,6,6,4,6,6,4,4],"B":[7,10,10,13,3,7,8,13,2,4,8,11,3,3,5,9],"G":[4,4,3,3,2,2,1,1,2,1,1,1,2,1,1,1],"W":[0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,1],"Y":[9,9,16,16,8,7,13,11,4,3,8,10,4,3,4,6]},{"number":6,"R":[3,3,5,2,3,3,2,2,3,2,3,3,2,1,3,3],"B":[3,5,8,10,1,3,9,10,0,3,8,9,1,3,5,6],"G":[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],"Y":[6,11,12,8,4,7,8,6,2,0,2,5,0,0,1,1]},{"number":7,"R":[3,3,4,4,3,4,2,4,4,4,3,3,2,3,3,3],"B":[1,3,3,1,1,6,7,7,0,4,7,10,0,0,1,9],"G":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"W":[1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3],"Y":[6,7,9,6,6,5,7,5,1,1,3,1,0,2,2,1]},{"number":8,"R":[3,3,1,0,3,3,1,0,1,2,1,3,0,1,1,3],"B":[2,6,4,4,1,2,4,4,1,2,6,6,1,3,3,4],"G":[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"Y":[3,4,3,0,3,4,6,3,3,2,2,2,1,0,0,1]},{"number":9,"R":[3,3,3,3,3,2,2,2,1,2,1,1,2,1,1,3],"B":[0,1,5,7,0,2,5,8,0,1,3,8,1,1,7,7],"G":[1,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0],"W":[0,0,1,1,0,0,1,1,1,1,1,1,1,1,1,1],"Y":[7,7,5,1,5,5,8,4,3,2,3,4,1,1,1,1]},{"number":10,"R":[8,8,6,8,6,6,4,6,6,6,4,6,8,8,6,8],"B":[10,10,11,12,10,10,11,12,10,10,11,12,8,8,9,10],"G":[6,6,4,3,6,6,4,3,6,6,4,3,6,6,4,3],"W":[3,3,3,3,4,4,4,4,4,4,4,4,6,6,6,6],"Y":[8,10,10,10,8,10,10,12,8,10,10,12,8,10,10,12]},{"number":11,"R":[3,3,4,2,3,3,4,2,3,4,4,3,4,3,3,3],"B":[3,5,12,13,6,4,12,13,5,5,12,9,1,2,6,8],"G":[1,3,3,3,1,3,0,0,1,3,0,1,1,1,2,2],"W":[2,1,1,1,1,0,1,1,0,0,1,1,0,0,1,1],"Y":[4,7,10,14,8,3,10,12,1,4,7,12,2,4,3,10]},{"number":12,"R":[4,4,7,16,3,1,1,12,3,1,1,12,6,4,3,8],"B":[3,10,12,17,0,8,10,15,1,3,7,14,1,3,7,14],"G":[6,6,3,3,6,6,3,3,4,4,1,1,4,2,1,1],"W":[0,0,3,3,0,0,3,3,0,0,3,3,0,0,3,3],"Y":[16,19,19,19,13,13,15,13,12,12,15,15,11,13,10,10]},{"number":13,"R":[4,5,7,8,6,6,9,5,5,10,11,8,5,10,9,8],"B":[12,12,12,13,9,9,9,10,12,10,10,11,12,12,12,13],"G":[4,4,9,9,4,4,8,10,5,6,6,5,5,6,7,5],"W":[7,4,4,4,4,3,3,3,7,6,6,6,7,6,6,6],"Y":[19,22,22,22,17,20,20,20,16,19,17,17,13,16,16,16]},{"number":14,"R":[4,8,11,10,7,10,8,10,7,4,5,8,3,3,4,7],"B":[7,13,16,22,7,8,16,22,7,7,16,19,7,7,17,23],"G":[1,1,1,3,1,1,1,3,1,1,1,3,1,1,1,3],"W":[0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0],"Y":[22,22,22,22,16,16,16,16,12,12,12,12,11,11,9,9]},{"number":15,"R":[9,9,6,6,11,9,6,8,6,8,9,11,8,9,11,11],"B":[10,11,11,3,13,15,13,4,15,12,13,4,13,10,9,4],"G":[9,9,7,5,6,6,4,4,6,6,4,4,4,4,4,2],"W":[3,4,4,9,3,4,4,9,3,3,3,9,3,3,3,6],"Y":[9,9,9,9,13,15,15,13,13,15,15,13,13,11,13,13]},{"number":16,"R":[4,7,7,5,4,7,7,5,6,6,6,4,6,6,4,4],"B":[11,13,17,21,12,14,16,17,8,8,11,10,8,6,11,7],"G":[3,3,1,1,3,3,1,1,3,3,1,1,1,1,1,1],"W":[1,3,3,3,3,3,3,3,3,3,3,3,2,4,4,4],"Y":[10,11,20,18,8,8,14,16,7,7,13,13,7,7,8,10]},{"number":17,"R":[3,4,5,4,4,6,7,7,6,6,7,6,6,6,5,3],"B":[2,5,5,4,1,2,2,4,1,3,3,6,1,3,3,3],"G":[4,1,0,0,4,0,0,0,1,0,0,0,1,0,0,0],"W":[0,0,1,1,1,1,1,3,1,0,3,3,2,1,4,6],"Y":[4,6,4,4,4,6,4,4,4,2,2,1,0,0,0,0]},{"number":18,"R":[4,8,8,9,6,6,6,7,6,6,6,7,6,6,6,4],"B":[3,7,7,7,2,9,9,9,2,7,7,7,6,4,3,3],"G":[4,3,3,3,4,3,3,3,4,3,3,3,4,3,3,3],"W":[1,1,1,3,3,3,3,3,3,3,3,3,6,6,6,6],"Y":[6,9,9,9,6,9,9,9,7,6,5,5,4,3,2,1]},{"number":19,"R":[0,1,1,0,0,0,0,1,0,0,0,1,0,0,0,0],"B":[0,2,5,5,0,1,3,6,0,1,1,6,0,1,4,4],"G":[3,3,0,0,3,1,0,0,1,1,0,0,1,0,0,0],"W":[0,0,0,1,0,0,0,3,1,1,1,3,1,3,3,3],"Y":[3,3,4,5,4,6,1,4,1,0,0,1,1,0,0,0]},{"number":20,"R":[3,1,0,0,3,1,0,0,1,2,3,3,0,1,3,3],"B":[0,5,5,9,0,5,9,10,1,6,12,10,2,4,8,9],"G":[1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],"W":[0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1],"Y":[6,7,6,1,6,7,4,1,1,1,1,1,0,0,0,0]},{"number":21,"R":[3,3,4,3,3,3,6,4,4,6,6,4,2,4,4,3],"B":[0,3,3,3,1,3,3,3,1,4,6,6,3,3,3,3],"G":[3,3,3,3,3,3,3,3,1,1,1,1,1,1,1,1],"W":[1,1,1,1,1,1,1,3,1,1,1,3,1,1,1,3],"Y":[3,6,4,3,3,6,4,3,3,3,3,3,3,1,1,1]},{"number":22,"R":[3,3,1,0,3,4,4,3,3,4,4,3,4,2,3,3],"B":[2,10,10,10,2,8,8,8,4,7,7,8,4,5,5,6],"G":[4,2,0,0,4,2,0,0,3,1,0,0,3,1,0,0],"W":[1,1,3,3,1,1,3,3,1,1,3,3,1,1,1,3],"Y":[7,9,11,11,6,8,8,10,4,6,6,2,2,2,2,2]}];
+window.perFingerReachability = {"LT":[{"R":[3,3,3,1,3,3,3,1,3,3,3,0,3,1,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,1,1,3,3,0,0,3,3,1,0,3,1,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,1,0,0,0,1,0,0,0,1,0,1,1,1],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,1,3,3,3,1,3,3,3,1,1,1,1,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,3,1,1,1,3,1,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,1,0,0,3,1,0,0,3,1,0,0,3,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,3,3,3,3,3,3,3,3,1,3,3,1,1],"B":[0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],"G":[1,1,0,0,1,1,0,0,1,0,0,0,1,0,0,0],"W":[0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,1],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,0,3,3,1,0,3,1,0,0,1,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,0,0,3,3,0,0,3,1,0,0,1,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[1,1,1,1,3,3,3,3,3,3,3,3,3,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,1,0,3,3,1,0,1,1,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,1,1,3,1,1,0,1,1,0,0,1,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,1,1,0,0,1,1,1,1,1,1,1,1,1,1],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,1,1,3,3,1,1,3,3,1,1,3,3,1,1],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,1,0,3,3,1,0,3,3,1,0,3,3,1,0],"W":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,1,3,3,3,1,3,3,1,0,3,0,0,0],"B":[0,0,0,0,0,0,0,0,1,0,0,0,1,1,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,1,1,0,3,1,1,0,3,1,1,0,3,1,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,0,0,3,3,0,0,3,3,0,0,3,1,0,0],"W":[0,0,3,3,0,0,3,3,0,0,3,3,0,0,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,3,3,3,3,1,3,3,3,1,3,3,1,1],"B":[0,0,0,0,0,0,0,0,3,1,1,1,3,3,3,3],"G":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],"W":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,3,3,0,3,3,0,0,3,0,0,1,0,0,0,1],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,1,1,3,3,1,1,3,1,1,1,3,1,1,1],"B":[3,1,1,0,3,3,1,0,3,3,1,0,3,3,1,0],"G":[3,3,1,1,3,3,1,1,3,3,1,1,1,1,1,1],"W":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,1,3,3,3,1,3,3,3,1,3,3,1,1],"B":[0,0,0,0,3,3,1,0,3,3,3,0,3,1,3,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[1,3,3,3,3,3,3,3,3,3,3,3,1,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,0,3,3,3,1,3,3,1,0,3,3,1,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,1,1,1,1,1,3,1,0,3,3,1,0,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1],"B":[0,0,0,0,0,0,0,0,1,0,0,0,3,1,0,0],"G":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],"W":[1,1,1,3,3,3,3,3,3,3,3,3,3,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,1,0,0,0,3,1,1,1,3,1,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,1,0,0,3,1,0,0,1,1,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,1,3,3,3,1,3,3,3,1,1,1,1,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[1,1,1,1,1,1,1,3,1,1,1,3,1,1,1,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,1,0,3,3,1,0,3,3,1,0,3,1,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,1,0,0,3,1,0,0,3,1,0,0,3,1,0,0],"W":[1,1,3,3,1,1,3,3,1,1,3,3,1,1,1,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"LI":[{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,1,1,1,1,1,3,3,1,0,3,3,1,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,3,1,0,0,3,1,1,1,3,3,1,0,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,0,3,3,1,3,3,3,1,3,3,3,1,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,3,0,1,3,3,0,1,3,3,0,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,3,1,3,3,3,1,3,3,3,1,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,1,1,0,1,3,3,0,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,1,3,0,0,1,3,0,0,1,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,1,3,3,1,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,1,1,0,1,0,3,1,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[3,3,3,3,1,1,1,1,1,1,1,1,1,1,1,1],"B":[1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,1,3,3,1,0,3,3,1,3,3,3,0,0,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,3,3,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,3,3,0,1,3,3,0,1,3,3,0,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0],"B":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,0,0,0,0,0,0,0,0]},{"R":[0,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0],"B":[0,3,3,3,0,1,3,3,0,0,3,3,0,0,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0]},{"R":[3,3,1,0,3,1,1,0,1,1,0,0,0,1,0,0],"B":[1,1,1,1,1,3,3,1,3,0,3,1,3,0,3,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,3,0,0,0,3,0,0,0,3,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,1,1,1,1,1,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,1,1,1,1,1,1,1,1,3,3,3,1,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,1,1,1,1,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,3,0,0,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,1,0,1,3,3,0,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,1,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,3,1,3,3,3,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0]}],"LM":[{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,3,0,3,3,3,0,1,3,3,0,0,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,1,0,1,3,3,0,3,3,3,0,0,1,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,3,3,3,0,3,3,3,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,3,3,0,0,3,3,0,0,0,3,0,0,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,1,3,3,3,1,1,3,3,1,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,3,3,0,1,3,3,0,1,3,3,0,0,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,0,3,0,1,3,3,0,0,0,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,1,1,1,3,3,1,1,3,3,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,1,0,0,0,3,0,0,1,3,0,0,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,1,3,3,1,1,3,3,1,1,3,3,0,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,0,3,3,3,0,1,3,3,0,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,1,1,1,1,1,1,1,1,0,0,0,0]},{"R":[1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0],"B":[1,3,3,3,1,0,3,3,1,0,3,0,1,0,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,1,1,1,1,0,0,0,0,0,0,0,0]},{"R":[3,3,3,1,3,3,1,1,0,0,1,0,1,1,1,0],"B":[0,3,3,0,3,3,3,1,3,3,3,1,3,3,3,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,1,1,3,0,1,1,3,0,0,0,3,0,0,0,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,3,3,3,3,1,1,1,1,1,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,1,3,0,1,1,3,0,0,0,3,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,1,1,0,3,3,3,0,3,3,3,1,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,1,1,0,1,1,3,0,1,1,3,0,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,1,3,0,1,3,3,0,1,3,3,0,1,1,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,1,3,3,3,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,3,3,3,0,3,3,3,0,3,3,3,0,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"LR":[{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,3,1,1,3,3,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,1,3,3,0,3,3,3,0,0,0,1,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,3,3,0,1,3,3,0,1,3,3,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,3,3,0,0,1,3,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,1,1,1,3,0,0,1,1,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,3,3,0,1,3,3,0,1,1,1,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,3,3,1,0,3,3,1,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,3,0,1,1,1,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,3,0,1,3,3,0,0,1,1,0,0,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,3,3,3,3,3,3,3,3,1,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,3,3,1,3,3,3,1,0,3,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[1,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,3,3,3,0,3,3,3,1,1,1,1,1,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,1,1,1,1,1,1]},{"R":[1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],"B":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,1,1,1,1,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,1,3,3,3,1,3,3,3,1,3,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,3,1,3,3,3,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,3,3,3,1,3,3,3,1,3,3,3,1,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,3,0,0,1,3,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,1,3,0,1,3,3,0,1,3,3,1,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,1,3,3,3,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,3,3,3,0,1,1,1,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"LL":[{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,3,0,3,3,1,0,0,1,1,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,3,3,1,0,3,3,1,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,3,3,0,0,1,1,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,1,1,0,0,1,1,0,0,1,1,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,1,0,1,1,1,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,0,1,3,3,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,3,3,0,1,1,1,0,0,1,1,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,3,3,3,3,1,1,1,1,1,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,3,3,3,3,0,3,3,1,1,3,3,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,3,3,3,0,1,1,1,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[3,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0],"B":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,1,1,1,1,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,1,3,3,3,1,3,3,3,1,1,3,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,1,1,1,1,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[3,3,3,3,1,3,3,3,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,3,1,0,0,1,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,3,3,3,0,3,3,3,1,3,3,1,1,1,1,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"RT":[{"R":[0,1,1,1,1,3,3,3,1,0,3,3,1,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0]},{"R":[0,0,0,0,0,0,0,1,0,3,3,3,1,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,0,1,1,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,1,1,1,1,3,3,1,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,1,1,1,1,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[1,1,1,3,3,3,3,3,3,3,3,3,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,1,1,1,1,1,1,1,1,1,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0]},{"R":[0,0,0,0,0,0,1,1,0,1,3,3,1,1,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,1,1,1,1,3,3,3,1,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,1,1,3,0,1,1,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,1,0,0,1,1,1,0,1,1,1,1,1,1,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"W":[0,0,0,0,1,1,1,1,1,1,1,1,3,3,3,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,1,1,0,1,3,3,1,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,3,3,3,1,3,0,0,1,3,0,1,1,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,1,0,0,0,1,0,0,0,1,1,0,0]},{"R":[0,0,0,1,0,0,0,3,0,0,0,3,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,3,3,3,3,1,1,1,1,1,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,3,3,3,1,3,3,3,3,3,3,0,0]},{"R":[0,1,3,3,1,1,3,3,0,3,3,3,0,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"W":[0,0,0,0,0,0,0,0,3,3,3,3,3,3,3,3],"Y":[1,1,1,1,1,1,1,1,3,3,3,3,3,3,3,3]},{"R":[1,1,3,3,1,3,3,3,3,3,3,3,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,3,3,1,1]},{"R":[0,0,0,0,1,1,1,1,1,3,3,3,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,1,3,3,1,3,3,3,3,3,3,3,1]},{"R":[1,3,3,3,1,3,3,3,3,3,3,3,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,1,1,3,3,1,1,3,3,1,1,1,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,1,1,1,1,3,3,3,3,3,3,3,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,1,0,0,3,0,0,0,1,0,0,0,1,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,3],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],"W":[0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3],"Y":[0,0,0,0,0,0,0,0,1,1,0,0,3,1,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,0,0,3,1,0,0,1,1,0,0,1,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,1,3,3,0,1,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,1,1,0,0,3,3,1,3,3,3,1,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,3,3,3,3,3,1,1,1,1,1,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,1,3,3,0,1,3,3,1,1,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"RI":[{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,1,3,3,1,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,0,3,3,1,0,3,3,1,0,1,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,1,1,1,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,1,3,3,1,1,3,1,0,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,1,1,1,1,1,1,1,1,1]},{"R":[0,0,1,1,0,0,0,1,0,0,0,0,0,0,0,0],"B":[0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,1,3,3,1,1,1,0,0,0,0,0,0,0]},{"R":[0,0,3,3,0,0,1,3,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,0,0,3,1,0,0,1,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,1,0,0,3,1,0,0,3,1,0,0,1,0,0,0]},{"R":[0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,1,0,3,1,1,0,1,1,0,0,1,1,0,0]},{"R":[1,1,1,3,1,1,1,3,1,1,1,3,1,1,1,3],"B":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,3,3,3,3,3,3,3,0,3,3,3,0,1,1,1]},{"R":[0,0,0,3,0,0,0,3,0,0,0,3,0,0,0,1],"B":[0,0,0,1,0,0,0,1,0,0,0,3,0,0,0,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,0,1,1,1,0,1,3,3,3,1,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,1,3,3,0,1,1,3,0,1,1,0,0,1,1,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"B":[0,0,1,3,0,0,1,3,0,0,1,3,0,0,1,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,1,1,1,1]},{"R":[0,0,0,0,1,1,1,1,1,3,3,3,1,3,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[3,3,3,1,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,3,3,3,3,3,3,3,1,3,1,3,3]},{"R":[0,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0],"B":[1,1,3,3,1,1,3,3,1,1,3,3,1,1,3,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,1,1,3,3,1,1,3,1,1,0,0,0,0,0]},{"R":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,0,0,3,3,0,0,3,1,0,0,1,1,0,0]},{"R":[0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,3,3,0,0,1,0,0,0,1,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,0,0,3,3,0,0,1,1,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,1,0,3,3,1,0,3,0,0,0,3,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,1,1,1,0,0,0,0,0]}],"RM":[{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,3,3,0,0,3,3,0,0,1,3,0,0,1,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,1,3,3,0,0,3,3,0,1,1,1,0,0,0,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,3,3,3,1,3,3,3,1,0,1,3,0,0,1,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,3,3,3,1,3,3,1,1,3,3,1,0,1,1,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,3,3,1,1,3,3,1,1,3,3,1,1,1,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,3,3,3,0,3,3,1,0,0,1,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,0,3,3,3,1,0,1,1,0,0,1,1,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,3,3,0,0,3,3,0,0,1,1,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,1,0,1,3,1,0,1,1,1,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,0,3,3,3,0,3,3,0,0,3,3,0,0,0,3]},{"R":[0,0,0,3,0,0,0,3,0,0,0,3,0,0,0,1],"B":[0,0,0,3,0,0,0,3,0,0,0,3,0,0,0,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,1,0,0,1,1,0,0,1,1,0,0,1,1],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,3,3,0,0,3,3,0,0,0,0,0,0,1,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,1,1,3,0,1,1,3,0,1,1,3,0,1,1,3],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,1,1,1,1]},{"R":[0,0,1,3,0,0,1,3,0,0,1,3,0,0,3,3],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,3,0,0,1,3,0,0,1,3,0,0,1,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,3,3,1,1,3,3,1,1,3,3,1,1,1,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,3,3,3,1,3,3,3,1,1,1,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,1,1,0,1,1,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,1,1,1,3,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,0,3,3,1,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,3,0,0,0,3,0,0,0,3,0,0,0,1,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,3,3,3,1,3,3,3,1,3,3,0,0,0,0,0]}],"RR":[{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,1,3,0,0,1,3,0,0,0,3,0,0,0,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,3,0,0,0,3,0,0,0,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,1,1,0,0,3,3,0,0,3,3,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,3,3,0,0,3,3,0,0,1,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,3,3,1,1,3,3,1,1,3,3,1,1,1,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,3,3,3,0,1,3,1,0,0,1,1,0,0,1,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,1,3,3,0,1,3,1,0,0,1,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,3,3,0,0,1,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,3,1,1,1,3,1,1,0,1,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,3,3,3,1,3,3,3,1,3,3,3,1,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,3,3,3,1,0,3,3,0,1,1,3,0,1,1,3]},{"R":[0,0,0,3,0,0,0,3,0,0,0,3,0,0,0,3],"B":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,1,1,1,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"G":[0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"B":[0,0,1,3,0,0,1,3,0,0,1,3,0,0,1,3],"G":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,1,3,0,0,1,1,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,1,3,3,0,0,1,3,0,0,1,1,0,0,0,0]},{"R":[0,0,1,3,0,0,1,3,0,0,3,3,0,0,1,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,3,3,3,0,3,3,3,0,1,3,1,0,0,1,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,3,3,0,0,1,1,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,1,3,0,0,1,3,0,0,0,1,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,3,0,0,0,3,0,0,0,3,0,0,0,1,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,3,3,1,1,1,3,1,1,1,1,1,1,1,1]}],"RL":[{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,3,0,0,0,3,0,0,0,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,3,0,0,0,1,0,0,0,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,1,3,0,0,1,3,0,0,1,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,3,3,1,1,3,3,0,0,1,3,0,0,1,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,1,1,0,0,1,3,0,0,0,3,0,0,0,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,3,3,0,0,1,3,0,0,1,1,0,1,1,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,3,3,0,0,1,3,0,0,1,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,1,1,1,1,3,1,1,1,3,1,1,1,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,3,0,0,1,3,0,0,0,3,1,1,1,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,1,1,1,3,3,0,0,3,3,1,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,1,1,1,0,1,1,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,3,3,3,0,3,3,3,0,3,3,3,0,3,3,3]},{"R":[0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1],"B":[0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1],"G":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[3,3,3,3,3,3,3,3,1,3,3,3,1,1,1,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,3,3,0,0,3,3,0,0,3,3,0,0,1,3]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,3,3,0,0,3,3,0,0,1,3,0,0,0,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,1,0,0,0,3,0,0,0,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[0,0,0,3,0,0,0,3,0,0,0,3,0,0,0,1]},{"R":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"B":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"G":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"W":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"Y":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}]};
+window.preferenceAggregate = {"scores":{"R":[0.95,0.86,0.73,0.41,0.91,0.86,0.86,0.91,0.95,0.55,0.95,0.95,0.64,1.0,1.0,0.95],"B":[0.41,0.5,0.64,0.41,0.5,0.59,0.59,0.73,0.45,0.59,0.5,0.68,0.86,1.0,0.91,0.86],"G":[0.91,1.0,1.0,1.0,0.91,0.95,1.0,0.95,0.95,0.91,0.91,0.95,0.91,0.95,0.95,0.82],"W":[0.91,0.91,0.95,0.86,0.95,0.95,0.91,1.0,0.91,0.95,1.0,1.0,0.82,0.95,1.0,0.91],"Y":[1.0,0.5,0.77,0.45,0.95,0.55,0.73,0.64,1.0,0.64,0.45,0.5,0.86,0.5,0.5,0.5]},"dominantFingers":{"R":["LT","LT","LT","RT","LT","LT","RT","RT","LT","LT","RT","RT","RT","RT","RT","RT"],"B":["LL","LR","LR","LR","LM","LM","LM","LM","LI","LI","LM","LI","LI","LI","LI","LI"],"G":["RT","RT","RT","RT","RT","RT","RT","RT","RT","RT","RT","RT","RT","RT","RT","RT"],"W":["LT","LT","LT","LT","LT","LT","LT","LT","LT","LT","LT","LT","LT","LT","LT","LT"],"Y":["RI","RM","RM","RR","RI","RI","RM","RR","RI","RI","RR","RR","RI","RM","RM","RL"]},"tiedFingers":{"R":[["LT"],["LT"],["LT"],["RT"],["LT"],["LT"],["RT"],["RT"],["LT"],["LT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"]],"B":[["LL","LR"],["LR"],["LR"],["LR","LM"],["LM"],["LM"],["LM"],["LM"],["LI"],["LI"],["LM","LI"],["LI"],["LI"],["LI"],["LI"],["LI"]],"G":[["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"],["RT"]],"W":[["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"],["LT"]],"Y":[["RI"],["RM"],["RM"],["RR"],["RI"],["RI"],["RM"],["RR"],["RI"],["RI"],["RR"],["RR"],["RI"],["RM"],["RM"],["RL"]]}};
+</script>
+
+  <script src="/assets/js/dataviz.js"></script>
+</body>
+</html>

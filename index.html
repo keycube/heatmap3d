@@ -1,28 +1,14 @@
 ---
-layout: landing
-title: Keycube Heatmap 3D
+layout: default
+title: Heatmap 3D
+lang: en
 ---
 
-<!-- Full-screen 3D canvas container -->
-<div id="landing-canvas"></div>
+<meta http-equiv="refresh" content="0; url={{ '/preference/' | relative_url }}">
+<script>
+  window.location.replace("{{ '/preference/' | relative_url }}");
+</script>
 
-<!-- Overlay: Title + Navigation Buttons -->
-<div class="landing-overlay">
-  <div class="landing-title">
-    <h1>Heatmap 3D</h1>
-    <p class="subtitle">Interactive visualization of experimental data</p>
-  </div>
-
-  <nav class="nav-buttons">
-    <a href="{{ site.baseurl }}/preference" class="nav-btn preference-btn">
-      <span class="btn-icon">👤</span>
-      <span class="btn-label">Preference</span>
-      <span class="btn-desc">Individual &amp; aggregate preference data</span>
-    </a>
-    <a href="{{ site.baseurl }}/reachability" class="nav-btn reachability-btn">
-      <span class="btn-icon">🖐️</span>
-      <span class="btn-label">Reachability</span>
-      <span class="btn-desc">Finger-to-key heatmap</span>
-    </a>
-  </nav>
-</div>
+<main style="padding: 2rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <p>Redirecting to <a href="{{ '/preference/' | relative_url }}">Preference</a>.</p>
+</main>

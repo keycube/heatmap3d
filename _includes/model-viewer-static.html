@@ -19,14 +19,17 @@ scene.background = new THREE.Color('#ffffff');
 
 // ─── Camera ───
 // Slightly above center, face-on view so the cube appears flat
-const camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 1000);
+const container = document.getElementById('landing-canvas');
+const initialWidth = container ? container.offsetWidth : window.innerWidth;
+const initialHeight = container ? container.offsetHeight : window.innerHeight;
+const camera = new THREE.PerspectiveCamera(25, initialWidth / initialHeight, 0.1, 1000);
 camera.position.set(0, 2, 5);
 
 // ─── Renderer ───
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.getElementById('landing-canvas').appendChild(renderer.domElement);
+renderer.setSize(initialWidth, initialHeight);
+if (container) container.appendChild(renderer.domElement);
 
 // ─── Controls ───
 // OrbitControls for interactive rotation, with damping for smooth feel
@@ -153,7 +156,6 @@ animate();
 // ─── Responsive Resize ───
 // Ref: https://threejs.org/manual/#en/responsive
 function handleResize() {
-  const container = document.getElementById('landing-canvas');
   const w = container ? container.offsetWidth : window.innerWidth;
   const h = container ? container.offsetHeight : window.innerHeight;
   camera.aspect = w / h;

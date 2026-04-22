@@ -1,9 +1,9 @@
 ---
 layout: dataviz
-title: Reachability – Keycube Heatmap 3D
+title: Accessibilité – Keycube Heatmap 3D
 default_mode: reachability
-permalink: /reachability
-lang: en
+permalink: /reachability-fr
+lang: fr
 ---
 
 <a href="{{ '/' | relative_url }}" class="nav-link">← Home</a>
@@ -21,28 +21,28 @@ lang: en
         <!-- Left Hand -->
         <div class="hand-analog" id="left-hand-analog">
           <div class="analog-ring" data-hand="left">
-            <div class="analog-stick"><span class="analog-center-label">Left</span></div>
-            <button class="finger-dot finger-thumb-left" data-finger="LT" data-tooltip="Left Thumb"><span class="finger-letter">T</span></button>
-            <button class="finger-dot finger-index-left" data-finger="LI" data-tooltip="Left Index"><span class="finger-letter">I</span></button>
-            <button class="finger-dot finger-middle-left" data-finger="LM" data-tooltip="Left Middle"><span class="finger-letter">M</span></button>
-            <button class="finger-dot finger-ring-left" data-finger="LR" data-tooltip="Left Ring"><span class="finger-letter">R</span></button>
-            <button class="finger-dot finger-little-left" data-finger="LL" data-tooltip="Left Little"><span class="finger-letter">L</span></button>
+            <div class="analog-stick"><span class="analog-center-label">Gauche</span></div>
+            <button class="finger-dot finger-thumb-left" data-finger="LT" data-tooltip="Pouce gauche"><span class="finger-letter">P</span></button>
+            <button class="finger-dot finger-index-left" data-finger="LI" data-tooltip="Index gauche"><span class="finger-letter">I</span></button>
+            <button class="finger-dot finger-middle-left" data-finger="LM" data-tooltip="Majeur gauche"><span class="finger-letter">M</span></button>
+            <button class="finger-dot finger-ring-left" data-finger="LR" data-tooltip="Annulaire gauche"><span class="finger-letter">A</span></button>
+            <button class="finger-dot finger-little-left" data-finger="LL" data-tooltip="Auriculaire gauche"><span class="finger-letter">Au</span></button>
           </div>
         </div>
         <!-- Center: All + Best buttons -->
         <div class="hand-divider" style="display: flex; flex-direction: column; gap: 6px;">
-          <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="All fingers combined (total score)">All</button>
-          <button class="hand-action-btn" id="btn-best-finger" data-tooltip="Preferred finger per key (Figure 7 right)">⭐ Preferred</button>
+          <button class="hand-action-btn active" id="btn-all-fingers" data-tooltip="Tous les doigts combinés">Tout</button>
+          <button class="hand-action-btn" id="btn-best-finger" data-tooltip="Doigt préféré par touche (Figure 7 droite)">⭐ Préféré</button>
         </div>
         <!-- Right Hand -->
         <div class="hand-analog" id="right-hand-analog">
           <div class="analog-ring" data-hand="right">
-            <div class="analog-stick"><span class="analog-center-label">Right</span></div>
-            <button class="finger-dot finger-thumb-right" data-finger="RT" data-tooltip="Right Thumb"><span class="finger-letter">T</span></button>
-            <button class="finger-dot finger-index-right" data-finger="RI" data-tooltip="Right Index"><span class="finger-letter">I</span></button>
-            <button class="finger-dot finger-middle-right" data-finger="RM" data-tooltip="Right Middle"><span class="finger-letter">M</span></button>
-            <button class="finger-dot finger-ring-right" data-finger="RR" data-tooltip="Right Ring"><span class="finger-letter">R</span></button>
-            <button class="finger-dot finger-little-right" data-finger="RL" data-tooltip="Right Little"><span class="finger-letter">L</span></button>
+            <div class="analog-stick"><span class="analog-center-label">Droite</span></div>
+            <button class="finger-dot finger-thumb-right" data-finger="RT" data-tooltip="Pouce droit"><span class="finger-letter">P</span></button>
+            <button class="finger-dot finger-index-right" data-finger="RI" data-tooltip="Index droit"><span class="finger-letter">I</span></button>
+            <button class="finger-dot finger-middle-right" data-finger="RM" data-tooltip="Majeur droit"><span class="finger-letter">M</span></button>
+            <button class="finger-dot finger-ring-right" data-finger="RR" data-tooltip="Annulaire droit"><span class="finger-letter">A</span></button>
+            <button class="finger-dot finger-little-right" data-finger="RL" data-tooltip="Auriculaire droit"><span class="finger-letter">Au</span></button>
           </div>
         </div>
       </div>
@@ -53,37 +53,37 @@ lang: en
   <div class="bottom-bar">
     <div class="selection-badge" id="selection-badge">
       <span class="selection-icon">🖐️</span>
-      <span class="selection-text" id="selection-text">All Fingers (Total)</span>
+      <span class="selection-text" id="selection-text">Tous les doigts (Total)</span>
     </div>
 
     <div class="finger-context" id="finger-context">
-      Combined reachability across all 10 fingers and 22 participants.
+      Accessibilité combinée des 10 doigts et 22 participants.
     </div>
 
     <div class="heatmap-legend">
-      <span>Unreachable (0)</span>
+      <span>Inaccessible (0)</span>
       <div class="heatmap-gradient"></div>
-      <span>Reachable (3)</span>
+      <span>Accessible (3)</span>
     </div>
 
-    <button class="reset-view-btn" id="reset-view-btn">↻ Reset View</button>
+    <button class="reset-view-btn" id="reset-view-btn">↻ Réinitialiser</button>
   </div>
 
 </div>
 
 <!-- Hidden select for dataviz.js compatibility -->
 <select class="finger-select" id="finger-select" style="display:none;">
-  <option value="total">All Fingers (Total)</option>
-  <option value="LT">Left Thumb</option>
-  <option value="LI">Left Index</option>
-  <option value="LM">Left Middle</option>
-  <option value="LR">Left Ring</option>
-  <option value="LL">Left Little</option>
-  <option value="RT">Right Thumb</option>
-  <option value="RI">Right Index</option>
-  <option value="RM">Right Middle</option>
-  <option value="RR">Right Ring</option>
-  <option value="RL">Right Little</option>
+  <option value="total">Tous les doigts (Total)</option>
+  <option value="LT">Pouce gauche</option>
+  <option value="LI">Index gauche</option>
+  <option value="LM">Majeur gauche</option>
+  <option value="LR">Annulaire gauche</option>
+  <option value="LL">Auriculaire gauche</option>
+  <option value="RT">Pouce droit</option>
+  <option value="RI">Index droit</option>
+  <option value="RM">Majeur droit</option>
+  <option value="RR">Annulaire droit</option>
+  <option value="RL">Auriculaire droit</option>
 </select>
 
 <!-- Side panel toggle -->
@@ -92,17 +92,17 @@ lang: en
 <!-- Side panel -->
 <div id="info-panel" class="side-panel glass-panel hidden">
 
-  <h4>How to Use</h4>
+  <h4>Comment utiliser</h4>
   <div class="mode-description">
-    <p style="margin-bottom: 8px;">1. Click a <strong>finger dot</strong> to see its reach</p>
-    <p style="margin-bottom: 8px;">2. Click the <strong>hand center</strong> for all 5 fingers</p>
-    <p>3. Use <strong>All / Preferred</strong> buttons for quick filtering</p>
+    <p style="margin-bottom: 8px;">1. Cliquez sur un <strong>point de doigt</strong> pour voir son accessibilité</p>
+    <p style="margin-bottom: 8px;">2. Cliquez sur le <strong>centre de la main</strong> pour les 5 doigts</p>
+    <p>3. Utilisez <strong>Tout / Préféré</strong> pour un filtrage rapide</p>
   </div>
 
-  <h4>Hand-Face Mapping</h4>
+  <h4>Correspondance Main-Face</h4>
   <div class="hand-face-map" style="margin-top: 8px;">
     <div class="hand-face-card">
-      <div class="hand-face-title">🤚 Left Hand</div>
+      <div class="hand-face-title">🤚 Main gauche</div>
       <div class="face-tags">
         <span class="face-tag" style="background:#4dabf7;color:#fff;">B</span>
         <span class="face-tag" style="background:#f8f9fa;color:#333;border:1px solid #ccc;">W</span>
@@ -110,7 +110,7 @@ lang: en
       </div>
     </div>
     <div class="hand-face-card">
-      <div class="hand-face-title">Right Hand 🤚</div>
+      <div class="hand-face-title">Main droite 🤚</div>
       <div class="face-tags">
         <span class="face-tag" style="background:#ffd43b;color:#333;">Y</span>
         <span class="face-tag" style="background:#51cf66;color:#fff;">G</span>
@@ -119,16 +119,16 @@ lang: en
     </div>
   </div>
 
-  <h4>Study Info</h4>
+  <h4>Informations sur l'étude</h4>
   <div class="study-info">
     <div class="study-stat-grid">
       <div class="study-stat-item"><strong>22</strong>Participants</div>
-      <div class="study-stat-item"><strong>80</strong>Keys</div>
-      <div class="study-stat-item"><strong>10</strong>Fingers</div>
-      <div class="study-stat-item"><strong>3-pt</strong>Scale</div>
+      <div class="study-stat-item"><strong>80</strong>Touches</div>
+      <div class="study-stat-item"><strong>10</strong>Doigts</div>
+      <div class="study-stat-item"><strong>3-pt</strong>Échelle</div>
     </div>
-    <p>Scoring: <span style="color:#51cf66">3</span> = easily reachable, <span style="color:#ffd43b">1</span> = with effort, <span style="color:#ff6b6b">0</span> = unreachable.</p>
-    <p>Data: Sum across 22 participants. Max per key per finger = 66, max total per key = 660, color scale capped at 198 as in the paper.</p>
+    <p>Score: <span style="color:#51cf66">3</span> = facilement accessible, <span style="color:#ffd43b">1</span> = avec effort, <span style="color:#ff6b6b">0</span> = inaccessible.</p>
+    <p>Données: Somme des 22 participants. Max par touche par doigt = 66, max total par touche = 660, échelle de couleur plafonnée à 198 comme dans le paper.</p>
   </div>
 
 </div>
@@ -147,20 +147,20 @@ document.addEventListener('DOMContentLoaded', function () {
   var FACES = ['R','B','G','W','Y'];
 
   var fingerData = {
-    'total': { name: 'All Fingers (Total)', icon: '🖐️', info: 'Combined reachability across all 10 fingers and 22 participants. Figure 7 left.' },
-    'best': { name: 'Preferred Finger (per key)', icon: '⭐', info: 'Shows the reachability score of the preferred finger for each key, correlated with Figure 6. Figure 7 right.' },
-    'left-all': { name: 'Left Hand (All)', icon: '🤚', info: 'Left hand covers Blue (external), White (internal), and left half of Red (top).' },
-    'right-all': { name: 'Right Hand (All)', icon: '🤚', info: 'Right hand covers Yellow (external), Green (internal), and right half of Red (top).' },
-    'LT': { name: 'Left Thumb', icon: '👍', info: 'Left Thumb — widest reach on the left side.' },
-    'LI': { name: 'Left Index', icon: '☝️', info: 'Left Index — upper rows of Blue face.' },
-    'LM': { name: 'Left Middle', icon: '🖕', info: 'Left Middle — middle rows of Blue face.' },
-    'LR': { name: 'Left Ring', icon: '💍', info: 'Left Ring — lower rows of Blue face.' },
-    'LL': { name: 'Left Little', icon: '🤙', info: 'Left Little — bottom corner of Blue only.' },
-    'RT': { name: 'Right Thumb', icon: '👍', info: 'Right Thumb — widest reach on right side.' },
-    'RI': { name: 'Right Index', icon: '☝️', info: 'Right Index — upper rows of Yellow face.' },
-    'RM': { name: 'Right Middle', icon: '🖕', info: 'Right Middle — middle rows of Yellow face.' },
-    'RR': { name: 'Right Ring', icon: '💍', info: 'Right Ring — lower rows of Yellow face.' },
-    'RL': { name: 'Right Little', icon: '🤙', info: 'Right Little — bottom corner of Yellow only.' }
+    'total': { name: 'Tous les doigts (Total)', icon: '🖐️', info: 'Accessibilité combinée des 10 doigts et 22 participants. Figure 7 gauche.' },
+    'best': { name: 'Doigt préféré (par touche)', icon: '⭐', info: 'Affiche le score d’accessibilité du doigt préféré pour chaque touche, corrélé à la Figure 6. Figure 7 droite.' },
+    'left-all': { name: 'Main gauche (Tous)', icon: '🤚', info: 'La main gauche couvre Bleu (externe), Blanc (interne), et moitié gauche de Rouge (haut).' },
+    'right-all': { name: 'Main droite (Tous)', icon: '🤚', info: 'La main droite couvre Jaune (externe), Vert (interne), et moitié droite de Rouge (haut).' },
+    'LT': { name: 'Pouce gauche', icon: '👍', info: 'Pouce gauche — portée la plus large côté gauche.' },
+    'LI': { name: 'Index gauche', icon: '☝️', info: 'Index gauche — rangées supérieures face Bleue.' },
+    'LM': { name: 'Majeur gauche', icon: '🖕', info: 'Majeur gauche — rangées du milieu face Bleue.' },
+    'LR': { name: 'Annulaire gauche', icon: '💍', info: 'Annulaire gauche — rangées inférieures face Bleue.' },
+    'LL': { name: 'Auriculaire gauche', icon: '🤙', info: 'Auriculaire gauche — coin inférieur Bleu uniquement.' },
+    'RT': { name: 'Pouce droit', icon: '👍', info: 'Pouce droit — portée la plus large côté droit.' },
+    'RI': { name: 'Index droit', icon: '☝️', info: 'Index droit — rangées supérieures face Jaune.' },
+    'RM': { name: 'Majeur droit', icon: '🖕', info: 'Majeur droit — rangées du milieu face Jaune.' },
+    'RR': { name: 'Annulaire droit', icon: '💍', info: 'Annulaire droit — rangées inférieures face Jaune.' },
+    'RL': { name: 'Auriculaire droit', icon: '🤙', info: 'Auriculaire droit — coin inférieur Jaune uniquement.' }
   };
 
   function updateUI(key, activeFingers) {

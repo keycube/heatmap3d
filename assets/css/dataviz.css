@@ -12,7 +12,14 @@ body, html {
 }
 
 /* Full-screen 3D canvas */
-#model-container { position: fixed; inset: 0; z-index: 0; }
+#model-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
 
 /* Glassmorphism base */
 .glass-panel {
@@ -181,6 +188,63 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+.finger-preference-legend {
+  display: grid;
+  gap: 5px;
+  padding: 8px 12px;
+  min-width: 184px;
+}
+
+.heatmap-legend.hidden {
+  display: none;
+}
+
+.face-buttons.hidden {
+  display: none;
+}
+
+.finger-preference-legend.hidden {
+  display: none;
+}
+
+.finger-legend-header,
+.finger-legend-row {
+  display: grid;
+  grid-template-columns: 1fr 28px 28px;
+  align-items: center;
+  gap: 8px;
+}
+
+.finger-legend-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #222;
+}
+
+.finger-legend-row {
+  font-size: 11px;
+  color: #444;
+}
+
+.finger-swatch {
+  display: inline-block;
+  width: 28px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.finger-swatch-ll { background: linear-gradient(135deg, #a5c0c6, #275a66); }
+.finger-swatch-lr { background: linear-gradient(135deg, #c2d5d8, #688c97); }
+.finger-swatch-lm { background: linear-gradient(135deg, #d1e0e3, #8aa8b0); }
+.finger-swatch-li { background: linear-gradient(135deg, #dee9eb, #aec6cb); }
+.finger-swatch-lt { background: linear-gradient(135deg, #eef6f7, #b8d3d9); }
+.finger-swatch-rt { background: linear-gradient(135deg, #f7eef2, #e0c2cf); }
+.finger-swatch-ri { background: linear-gradient(135deg, #f1dee7, #d3afc1); }
+.finger-swatch-rm { background: linear-gradient(135deg, #e8cdd9, #bc8ba3); }
+.finger-swatch-rr { background: linear-gradient(135deg, #ddb9cc, #a56784); }
+.finger-swatch-rl { background: linear-gradient(135deg, #cfa0b8, #7c2f52); }
+
 /* Tooltips */
 [data-tooltip] { position: relative; }
 [data-tooltip]:hover::after {
@@ -250,8 +314,7 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
 
 /* Hand Selector */
 .hand-selector-container { display: flex; align-items: center; justify-content: center; gap: 14px; }
-.hand-analog { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.analog-label { font-size: 11px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
+.hand-analog { display: flex; flex-direction: column; align-items: center; }
 .analog-ring {
   position: relative;
   width: 100px; height: 100px;
@@ -276,7 +339,13 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
   justify-content: center;
   pointer-events: none;
 }
-.hand-emoji { font-size: 17px; }
+.analog-center-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #444;
+  line-height: 1.1;
+  text-align: center;
+}
 
 /* Finger dots */
 .finger-dot {
@@ -298,6 +367,7 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
   background: #4dabf7;
   border-color: #4dabf7;
   color: #fff;
+  transform: scale(1.2);
   box-shadow: 0 0 10px rgba(77, 171, 247, 0.5);
   z-index: 100;
 }
@@ -306,22 +376,7 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
   border-color: #228be6;
   color: #fff;
   box-shadow: 0 0 12px rgba(77, 171, 247, 0.6);
-}
-/* Scale effect for non-middle fingers */
-.finger-dot:hover:not(.finger-middle-left):not(.finger-middle-right) {
-  transform: scale(1.2);
-}
-.finger-dot.active:not(.finger-middle-left):not(.finger-middle-right) {
   transform: scale(1.15);
-}
-/* Middle fingers need to preserve translateX centering */
-.finger-middle-left:hover,
-.finger-middle-right:hover {
-  transform: translateX(-50%) scale(1.2);
-}
-.finger-middle-left.active,
-.finger-middle-right.active {
-  transform: translateX(-50%) scale(1.15);
 }
 .finger-letter { font-size: 10px; font-weight: 700; line-height: 1; pointer-events: none; }
 
@@ -336,6 +391,17 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
 .finger-middle-right { top: -10px; left: 50%; transform: translateX(-50%); }
 .finger-ring-right { top: 4%; right: 4px; }
 .finger-little-right { top: 42%; right: -12px; }
+
+/* Fix: Middle fingers need combined transform to keep centering on hover/active */
+.finger-middle-left:hover,
+.finger-middle-right:hover {
+  transform: translateX(-50%) scale(1.2);
+}
+.finger-middle-left.active,
+.finger-middle-right.active {
+  transform: translateX(-50%) scale(1.15);
+}
+
 .finger-dot[data-tooltip]:hover::after { bottom: 115%; font-size: 10px; }
 
 /* Hand divider & actions */
@@ -364,7 +430,7 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
   .side-panel { width: 260px; }
   .analog-ring { width: 90px; height: 90px; }
   .analog-stick { width: 34px; height: 34px; }
-  .hand-emoji { font-size: 15px; }
+  .analog-center-label { font-size: 10px; }
   .finger-dot { width: 22px; height: 22px; }
   .finger-letter { font-size: 9px; }
   select { min-width: 180px; font-size: 12px; }
@@ -384,7 +450,7 @@ button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0,
   .hand-selector-container { gap: 10px; }
   .analog-ring { width: 85px; height: 85px; }
   .analog-stick { width: 30px; height: 30px; }
-  .hand-emoji { font-size: 14px; }
+  .analog-center-label { font-size: 10px; }
   .finger-dot { width: 22px; height: 22px; }
   .finger-letter { font-size: 9px; }
 }

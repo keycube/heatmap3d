@@ -1,9 +1,9 @@
 ---
 layout: dataviz
-title: Preference – Keycube Heatmap 3D
+title: Préférence – Keycube Heatmap 3D
 default_mode: preference
-permalink: /preference
-lang: en
+permalink: /preference-fr
+lang: fr
 ---
 
 <a href="{{ '/' | relative_url }}" class="nav-link">← Home</a>
@@ -17,11 +17,11 @@ lang: en
   <!-- ── Top bar: participant select + face buttons ── -->
   <div class="top-bar">
     <select id="participant-select">
-      <option value="">Choose a participant...</option>
-      <option value="aggregate">📊 Aggregate Study View (22 participants)</option>
+      <option value="">Choisir un participant...</option>
+      <option value="aggregate">📊 Vue agrégée de l'étude (22 participants)</option>
       {% for row in site.data.preferences %}
         <option value="{{ forloop.index0 }}">
-          P{{ row.Number }} ({{ row.Handedness | capitalize }}, span {{ row.SpanRightHand }}mm)
+          P{{ row.Number }} ({{ row.Handedness | capitalize }}, envergure {{ row.SpanRightHand }}mm)
         </option>
       {% endfor %}
     </select>
@@ -32,7 +32,7 @@ lang: en
       <button class="color-btn" data-color="G" style="background: #51cf66; color: white;">G</button>
       <button class="color-btn" data-color="W" style="background: #f8f9fa; color: black; border: 1px solid #ccc;">W</button>
       <button class="color-btn" data-color="Y" style="background: #ffd43b; color: black;">Y</button>
-      <button class="reset-btn" style="background: #868e96; color: white;">All</button>
+      <button class="reset-btn" style="background: #868e96; color: white;">Tout</button>
     </div>
   </div>
 
@@ -40,23 +40,23 @@ lang: en
   <div class="bottom-bar">
     <div class="selection-badge" id="selection-badge">
       <span class="selection-icon" id="selection-icon">🎯</span>
-      <span class="selection-text" id="selection-text">No participant selected</span>
+      <span class="selection-text" id="selection-text">Aucun participant sélectionné</span>
     </div>
 
     <div class="heatmap-legend" id="preference-heatmap-legend">
-      <span>Low confidence</span>
+      <span>Faible confiance</span>
       <div class="heatmap-gradient"></div>
-      <span>High confidence</span>
+      <span>Forte confiance</span>
     </div>
 
     <div class="finger-preference-legend glass-panel hidden" id="finger-preference-legend">
       <div class="finger-legend-header">
         <span></span>
-        <span>Left</span>
-        <span>Right</span>
+        <span>Gauche</span>
+        <span>Droite</span>
       </div>
       <div class="finger-legend-row">
-        <span>Thumb</span>
+        <span>Pouce</span>
         <span class="finger-swatch finger-swatch-lt"></span>
         <span class="finger-swatch finger-swatch-rt"></span>
       </div>
@@ -66,23 +66,23 @@ lang: en
         <span class="finger-swatch finger-swatch-ri"></span>
       </div>
       <div class="finger-legend-row">
-        <span>Middle</span>
+        <span>Majeur</span>
         <span class="finger-swatch finger-swatch-lm"></span>
         <span class="finger-swatch finger-swatch-rm"></span>
       </div>
       <div class="finger-legend-row">
-        <span>Ring</span>
+        <span>Annulaire</span>
         <span class="finger-swatch finger-swatch-lr"></span>
         <span class="finger-swatch finger-swatch-rr"></span>
       </div>
       <div class="finger-legend-row">
-        <span>Little</span>
+        <span>Auriculaire</span>
         <span class="finger-swatch finger-swatch-ll"></span>
         <span class="finger-swatch finger-swatch-rl"></span>
       </div>
     </div>
 
-    <button class="reset-view-btn" id="reset-view-btn">↻ Reset View</button>
+    <button class="reset-view-btn" id="reset-view-btn">↻ Réinitialiser</button>
   </div>
 
 </div>
@@ -93,32 +93,31 @@ lang: en
 <!-- Side panel -->
 <div id="info-panel" class="side-panel glass-panel hidden">
 
-  <h4>Selection</h4>
+  <h4>Sélection</h4>
   <div id="mode-description">
-    <p>Select <strong>Aggregate</strong> to view the paper's finger-to-key preference confidence ratio, or inspect a participant's raw finger-choice coding.</p>
+    <p>Sélectionnez <strong>Agrégé</strong> pour voir le ratio de sélection du doigt dominant du paper, ou inspectez le codage brut des choix de doigt d'un participant.</p>
   </div>
 
   <!-- Participant summary (hidden until selection) -->
   <div id="participant-summary" style="display: none;">
     <h4>Participant</h4>
-    <p><strong>Handedness:</strong> <span id="summary-handedness"></span></p>
-    <p><strong>Circumference:</strong> <span id="summary-circumference"></span> mm</p>
-    <p><strong>Length:</strong> <span id="summary-length"></span> mm</p>
-    <p><strong>Span:</strong> <span id="summary-span"></span> mm</p>
+    <p><strong>Latéralité:</strong> <span id="summary-handedness"></span></p>
+    <p><strong>Circonférence:</strong> <span id="summary-circumference"></span> mm</p>
+    <p><strong>Longueur:</strong> <span id="summary-length"></span> mm</p>
+    <p><strong>Envergure:</strong> <span id="summary-span"></span> mm</p>
   </div>
 
-  <h4>Study Info</h4>
+  <h4>Informations sur l'étude</h4>
   <div class="study-info">
     <div class="study-stat-grid">
-      <div class="study-stat-item"><strong>31</strong>Study 1</div>
-      <div class="study-stat-item"><strong>22</strong>Study 2</div>
-      <div class="study-stat-item"><strong>77.4%</strong>Diagonal</div>
-      <div class="study-stat-item"><strong>80</strong>Keys</div>
+      <div class="study-stat-item"><strong>31</strong>Étude 1</div>
+      <div class="study-stat-item"><strong>22</strong>Étude 2</div>
+      <div class="study-stat-item"><strong>77,4%</strong>Diagonale</div>
+      <div class="study-stat-item"><strong>80</strong>Touches</div>
     </div>
-    <p><strong>Study 1:</strong> Identified preferred holding positions. Diagonal chosen by 77.4%.</p>
-    <p><strong>Study 2:</strong> Aggregate mode shows the dominant finger selection ratio per key from Figure 6.</p>
-    <p>Color scale: <span style="color:#ff6b6b">Red</span> (low confidence) → <span style="color:#ffd43b">Yellow</span> → <span style="color:#51cf66">Green</span> (high confidence).</p>
-    <p>Faces: <span style="color:#ff6b6b">Red</span> (top), <span style="color:#4dabf7">Blue</span> &amp; <span style="color:#ffd43b">Yellow</span> (external), <span style="color:#f8f9fa;background:#333;padding:0 4px;border-radius:2px;">White</span> &amp; <span style="color:#51cf66">Green</span> (internal).</p>
+    <p><strong>Étude 1:</strong> Identification des positions de tenue préférées. Diagonale choisie par 77,4%.</p>
+    <p><strong>Étude 2:</strong> Le mode agrégé affiche le ratio de sélection du doigt dominant par touche de la Figure 6.</p>
+    <p>Échelle de couleur: <span style="color:#ff6b6b">Rouge</span> (faible confiance) → <span style="color:#ffd43b">Jaune</span> → <span style="color:#51cf66">Vert</span> (forte confiance).</p>
   </div>
 
 </div>

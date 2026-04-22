@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   var participantsData = window.participantsData;
+  var preferenceAggregate = window.preferenceAggregate;
   var reachabilityData = window.reachabilityData;
   var perFingerReachability = window.perFingerReachability;
 
@@ -8,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var currentParticipant = null;
   var currentFace = null;
   var FACES = ['R','B','G','W','Y'];
+  var isFrench = document.documentElement.lang === 'fr';
 
   // ─── Utility: compute aggregate data ───
   function computeAggregate(dataArray) {
@@ -32,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return result;
   }
 
-  var aggregatePreference = computeAggregateMean(participantsData);
+  var aggregatePreference = preferenceAggregate ? preferenceAggregate.scores : computeAggregateMean(participantsData);
   var aggregateReachability = computeAggregate(reachabilityData);
 
   // ─── Per-finger aggregate reachability ───
@@ -71,15 +73,30 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    var scores = { R: data.R, B: data.B, G: data.G, W: data.W, Y: data.Y };
-    var opts = { heatmapMin: 1, heatmapMax: 10, heatmapInvert: true, scores: scores, showScores: true };
+    var isAggregatePreference = currentParticipant === 'aggregate';
+    var scores = isAggregatePreference
+      ? data
+      : { R: data.R, B: data.B, G: data.G, W: data.W, Y: data.Y };
+    var opts = isAggregatePreference
+      ? {
+          scores: scores,
+          showScores: true,
+          scoreFormat: 'ratio',
+          preferenceFigure: preferenceAggregate,
+          figure6View: true
+        }
+      : { heatmapMin: 1, heatmapMax: 10, heatmapInvert: true, scores: scores, showScores: true, scoreFormat: 'integer', figure6View: false };
 
     if (currentFace) {
-      var singleFace = {};
-      singleFace[currentFace] = data[currentFace];
-      opts.heatmapSingleFace = singleFace;
+      if (isAggregatePreference) {
+        opts.preferenceFigureSingleFace = currentFace;
+      } else {
+        var singleFace = {};
+        singleFace[currentFace] = data[currentFace];
+        opts.heatmapSingleFace = singleFace;
+      }
     } else {
-      opts.heatmap = scores;
+      if (!isAggregatePreference) opts.heatmap = scores;
     }
     window.updateModel(opts);
   }
@@ -89,6 +106,24 @@ document.addEventListener('DOMContentLoaded', function () {
     var selectionText = document.getElementById('selection-text');
     if (selectionIcon) selectionIcon.textContent = icon;
     if (selectionText) selectionText.textContent = text;
+  }
+
+  function togglePreferenceLegend(show) {
+    var legend = document.getElementById('finger-preference-legend');
+    if (!legend) return;
+    legend.classList.toggle('hidden', !show);
+  }
+
+  function togglePreferenceHeatmapLegend(show) {
+    var legend = document.getElementById('preference-heatmap-legend');
+    if (!legend) return;
+    legend.classList.toggle('hidden', !show);
+  }
+
+  function togglePreferenceFaceButtons(show) {
+    var buttons = document.getElementById('preference-face-buttons');
+    if (!buttons) return;
+    buttons.classList.toggle('hidden', !show);
   }
 
   // ─── Participant selector ───
@@ -104,12 +139,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (val === 'aggregate') {
         currentParticipant = 'aggregate';
+        togglePreferenceLegend(true);
+        togglePreferenceHeatmapLegend(false);
+        togglePreferenceFaceButtons(false);
         if (summaryPanel) summaryPanel.style.display = 'none';
-        updateSelectionBadge('📊', 'Aggregate (Mean of 22 participants)');
+        updateSelectionBadge('📊', isFrench
+          ? 'Préférence agrégée (ratio du doigt dominant sur 22 participants)'
+          : 'Aggregate finger preference (dominant finger ratio across 22 participants)');
         if (window.updateModel) window.updateModel({ reset: true, hideScores: true });
         applyPreferenceView();
       } else if (val !== '') {
         currentParticipant = participantsData[parseInt(val)];
+        togglePreferenceLegend(false);
+        togglePreferenceHeatmapLegend(true);
+        togglePreferenceFaceButtons(true);
         if (window.updateModel) {
           window.updateModel({ reset: true, handedness: currentParticipant.handedness });
         }
@@ -121,12 +164,17 @@ document.addEventListener('DOMContentLoaded', function () {
             if (el) el.textContent = currentParticipant[key];
           });
         }
-        updateSelectionBadge('👤', 'Participant ' + currentParticipant.number + ' (' + currentParticipant.handedness + ')');
+        updateSelectionBadge('👤', isFrench
+          ? 'Participant ' + currentParticipant.number + ' (codage brut des doigts)'
+          : 'Participant ' + currentParticipant.number + ' finger-choice coding');
         applyPreferenceView();
       } else {
         currentParticipant = null;
+        togglePreferenceLegend(false);
+        togglePreferenceHeatmapLegend(true);
+        togglePreferenceFaceButtons(true);
         if (summaryPanel) summaryPanel.style.display = 'none';
-        updateSelectionBadge('🎯', 'No participant selected');
+        updateSelectionBadge('🎯', isFrench ? 'Aucun participant sélectionné' : 'No participant selected');
         if (window.updateModel) window.updateModel({ reset: true, hideScores: true });
       }
     });
@@ -162,15 +210,18 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!window.updateModel) return;
     var fingerEl = document.getElementById('finger-select');
     if (!fingerEl) return;
-    var data = fingerEl.value === 'total' ? aggregateReachability : getFingerReachability(fingerEl.value);
-    var range = getRange(data);
+    var isTotal = fingerEl.value === 'total';
+    var data = isTotal ? aggregateReachability : getFingerReachability(fingerEl.value);
+    var range = isTotal ? { min: 0, max: 198 } : { min: 0, max: 66 };
     window.updateModel({ 
       heatmap: data, 
-      heatmapMin: range.min, 
+      heatmapMin: range.min,
       heatmapMax: range.max,
       scores: data,
       showScores: true,
-      isReachability: true
+      isReachability: true,
+      scoreFormat: 'integer',
+      figure6View: false
     });
   }
 

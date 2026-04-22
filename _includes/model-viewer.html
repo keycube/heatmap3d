@@ -14,35 +14,68 @@ camera.position.set(0, 2, -5);
 const initialCameraPosition = camera.position.clone();
 
 // Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+const maxPixelRatio = 2.5;
+const renderPixelRatio = Math.min(window.devicePixelRatio || 1, maxPixelRatio);
 const container = document.getElementById('model-container');
 if (container) {
+  renderer.setPixelRatio(renderPixelRatio);
   renderer.setSize(container.offsetWidth, container.offsetHeight);
   container.appendChild(renderer.domElement);
   camera.aspect = container.offsetWidth / container.offsetHeight;
 } else {
+  renderer.setPixelRatio(renderPixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
   camera.aspect = window.innerWidth / window.innerHeight;
 }
 camera.updateProjectionMatrix();
+renderer.domElement.style.touchAction = 'none';
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const maxTextureAnisotropy = renderer.capabilities.getMaxAnisotropy();
 
 // Controls — smooth rotation like Playdate
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.05;  // Smooth inertia effect
-controls.rotateSpeed = 0.5;     // Slower, more controlled rotation
+controls.dampingFactor = 0.08;  // Slightly stronger inertia keeps movement deliberate
+controls.rotateSpeed = 0.42;    // Make face changes possible, but not too immediate
 
-// Zoom disabled (Playdate style)
-controls.enableZoom = false;
+// Keep the interaction object-centric: orbit only, with a tightly bounded zoom.
+controls.enablePan = false;
+const fixedDistance = camera.position.length();
+controls.enableZoom = true;
+controls.zoomSpeed = 0.85;
+controls.minDistance = fixedDistance * 0.82;
+controls.maxDistance = fixedDistance * 1.12;
 
-// Vertical rotation limits (keep cube upright, like Playdate)
-controls.minPolarAngle = Math.PI * 0.25;  // 45° from top
-controls.maxPolarAngle = Math.PI * 0.65;  // 117° (slight view from below)
+// Keep the cube upright while leaving every exposed face reachable.
+controls.minPolarAngle = Math.PI * 0.12;  // close enough to inspect the top face
+controls.maxPolarAngle = Math.PI * 0.88;  // low enough to inspect side faces comfortably
 
 // Auto-rotation settings (integrated with OrbitControls)
 controls.autoRotate = true;
 controls.autoRotateSpeed = 1.0;  // Slow rotation (degrees per second)
+let autoRotateResumeTimer = null;
+let autoRotateLocked = false;
+
+function pauseAutoRotate() {
+  if (autoRotateLocked) return;
+  controls.autoRotate = false;
+  if (autoRotateResumeTimer) clearTimeout(autoRotateResumeTimer);
+  autoRotateResumeTimer = setTimeout(() => {
+    controls.autoRotate = true;
+  }, 2400);
+}
+
+function captureViewerGesture(event) {
+  event.preventDefault();
+  pauseAutoRotate();
+}
+
+renderer.domElement.addEventListener('wheel', captureViewerGesture, { passive: false });
+renderer.domElement.addEventListener('touchmove', captureViewerGesture, { passive: false });
+renderer.domElement.addEventListener('gesturestart', captureViewerGesture, { passive: false });
+renderer.domElement.addEventListener('gesturechange', captureViewerGesture, { passive: false });
 
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -65,24 +98,32 @@ const keyGeometry = new THREE.BoxGeometry(keySize, keySize, keySize);
 const spacing = 0.20;
 const offset = 0.5;
 
-// Face layout — matches the diagonal holding position (Figure 4 of the paper).
-// The cube is rotated 45° around Y so from the camera (now at Z-5, behind the cube)
-// the two visible diagonal faces are: front-left = z-1, front-right = x+1.
-// The USER stands BEHIND the cube (same as camera), so their perspective matches.
-// The 6th face (y-1, bottom) has no keys.
-//
-//   R (Red)    → y+1 (top)         — shared by both thumbs
-//   B (Blue)   → z-1 (front-left from camera)  — user's LEFT hand external face
-//   Y (Yellow) → x+1 (front-right from camera) — user's RIGHT hand external face
-//   W (White)  → x-1 (back-left)   — next to Blue, internal
-//   G (Green)  → z+1 (back-right)  — next to Yellow, internal
+// Face layout — keyed to the paper's Figure 6 numbering on each face.
 const faces = [
-  { axis: 'y', sign: 1,  prefix: 'R', color: 'red' },
-  { axis: 'z', sign: -1, prefix: 'B', color: 'blue' },
-  { axis: 'x', sign: 1,  prefix: 'Y', color: 'yellow' },
-  { axis: 'x', sign: -1, prefix: 'W', color: 'white' },
-  { axis: 'z', sign: 1,  prefix: 'G', color: 'green' }
+  { axis: 'y', sign: 1,  prefix: 'R', color: 'red',    colAxis: 'x', colSign: 1,  rowAxis: 'z', rowSign: 1 },
+  { axis: 'z', sign: -1, prefix: 'B', color: 'blue',   colAxis: 'x', colSign: 1,  rowAxis: 'y', rowSign: 1 },
+  { axis: 'x', sign: 1,  prefix: 'Y', color: 'yellow', colAxis: 'y', colSign: -1, rowAxis: 'z', rowSign: 1 },
+  { axis: 'x', sign: -1, prefix: 'W', color: 'white',  colAxis: 'y', colSign: 1,  rowAxis: 'z', rowSign: 1 },
+  { axis: 'z', sign: 1,  prefix: 'G', color: 'green',  colAxis: 'x', colSign: 1,  rowAxis: 'y', rowSign: -1 }
 ];
+
+const faceByPrefix = Object.fromEntries(faces.map(face => [face.prefix, face]));
+
+const preferenceFigurePalette = {
+  LL: { low: '#a5c0c6', high: '#275a66' },
+  LR: { low: '#c2d5d8', high: '#688c97' },
+  LM: { low: '#d1e0e3', high: '#8aa8b0' },
+  LI: { low: '#dee9eb', high: '#aec6cb' },
+  LT: { low: '#eef6f7', high: '#b8d3d9' },
+  RT: { low: '#f7eef2', high: '#e0c2cf' },
+  RI: { low: '#f1dee7', high: '#d3afc1' },
+  RM: { low: '#e8cdd9', high: '#bc8ba3' },
+  RR: { low: '#ddb9cc', high: '#a56784' },
+  RL: { low: '#cfa0b8', high: '#7c2f52' }
+};
+
+const aggregatePreferenceRange = { min: 0.41, max: 1.0 };
+const preferenceFigureTextureCache = new Map();
 
 // Orient a plane to face outward from a surface
 function orientPlane(mesh, axis, sign) {
@@ -97,6 +138,9 @@ function createLabelPlane(size, canvasSize, axis, sign) {
   canvas.width = canvas.height = canvasSize;
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.anisotropy = Math.min(8, maxTextureAnisotropy);
   const mesh = new THREE.Mesh(
     new THREE.PlaneGeometry(size, size),
     new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: true, depthWrite: false })
@@ -107,23 +151,24 @@ function createLabelPlane(size, canvasSize, axis, sign) {
 
 // Create text label as a small plane decal stuck on the key surface
 function createTextLabel(text, axis, sign) {
-  const { mesh, canvas } = createLabelPlane(0.13, 128, axis, sign);
+  const { mesh, canvas, texture } = createLabelPlane(0.13, 512, axis, sign);
   const ctx = canvas.getContext('2d');
-  ctx.font = 'bold 56px Arial';
+  ctx.font = 'bold 224px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-  ctx.lineWidth = 4;
-  ctx.strokeText(text, 64, 64);
+  ctx.lineWidth = 16;
+  ctx.strokeText(text, 256, 256);
   ctx.fillStyle = 'white';
-  ctx.fillText(text, 64, 64);
+  ctx.fillText(text, 256, 256);
+  texture.needsUpdate = true;
   mesh.userData = { isLabel: true };
   return mesh;
 }
 
 // Create dynamic score label (initially hidden)
 function createScoreLabel(axis, sign) {
-  const { mesh, canvas, texture } = createLabelPlane(0.14, 256, axis, sign);
+  const { mesh, canvas, texture } = createLabelPlane(0.14, 1024, axis, sign);
   mesh.userData = { isScoreLabel: true, canvas, texture };
   mesh.visible = false;
   return mesh;
@@ -131,30 +176,36 @@ function createScoreLabel(axis, sign) {
 
 // Track current mode for score formatting
 let isReachabilityMode = false;
+let currentScoreFormat = 'integer';
 
 // Update score label text - shows both key ID and score
 function updateScoreLabelText(mesh, score, keyID) {
   const { canvas, texture } = mesh.userData;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 256, 256);
+  ctx.clearRect(0, 0, 1024, 1024);
   
   // Draw key ID
-  ctx.font = 'bold 56px Arial';
+  ctx.font = 'bold 224px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.strokeStyle = 'black';
-  ctx.lineWidth = 6;
-  ctx.strokeText(keyID, 128, 75);
+  ctx.lineWidth = 24;
+  ctx.strokeText(keyID, 512, 300);
   ctx.fillStyle = '#FFFF00';
-  ctx.fillText(keyID, 128, 75);
+  ctx.fillText(keyID, 512, 300);
   
   // Draw score
-  const fontSize = isReachabilityMode && score >= 100 ? 70 : 100;
+  const scoreText = currentScoreFormat === 'ratio'
+    ? (score === 1 ? '1' : String(score).replace(/^0/, ''))
+    : String(Math.round(score));
+  const fontSize = currentScoreFormat === 'ratio'
+    ? 356
+    : (isReachabilityMode && score >= 100 ? 284 : 400);
   ctx.font = `bold ${fontSize}px Arial`;
-  ctx.lineWidth = 8;
-  ctx.strokeText(Math.round(score), 128, 175);
+  ctx.lineWidth = 28;
+  ctx.strokeText(scoreText, 512, 700);
   ctx.fillStyle = 'white';
-  ctx.fillText(Math.round(score), 128, 175);
+  ctx.fillText(scoreText, 512, 700);
   
   texture.needsUpdate = true;
   mesh.visible = true;
@@ -164,26 +215,88 @@ function updateScoreLabelText(mesh, score, keyID) {
 const scoreLabels = {};
 
 // Helper to calculate label position
-function getLabelPosition(axis, sign, u, v, lift) {
-  if (axis === 'y') return { x: u, y: (offset + lift) * sign, z: v };
-  if (axis === 'x') return { x: (offset + lift) * sign, y: u, z: v };
-  return { x: u, y: v, z: (offset + lift) * sign };
+function getGridValue(index, sign) {
+  return (index - 1.5) * spacing * sign;
+}
+
+function getLabelPosition(face, row, col, lift) {
+  const pos = { x: 0, y: 0, z: 0 };
+  pos[face.axis] = (offset + lift) * face.sign;
+  pos[face.colAxis] = getGridValue(col, face.colSign);
+  pos[face.rowAxis] = getGridValue(row, face.rowSign);
+  return pos;
+}
+
+function toLinearColor(hex) {
+  return new THREE.Color(hex).convertSRGBToLinear();
+}
+
+function lerpHexColor(startHex, endHex, t) {
+  return toLinearColor(startHex).lerp(toLinearColor(endHex), t);
+}
+
+function getPreferenceFigureColor(fingerCode, score) {
+  const palette = preferenceFigurePalette[fingerCode] || preferenceFigurePalette.LT;
+  const t = THREE.MathUtils.clamp(
+    (score - aggregatePreferenceRange.min) / (aggregatePreferenceRange.max - aggregatePreferenceRange.min),
+    0,
+    1
+  );
+  return lerpHexColor(palette.low, palette.high, t);
+}
+
+function createPreferenceFigureTexture(keyID, colors) {
+  const cacheKey = `${keyID}:${colors.join('|')}`;
+  if (preferenceFigureTextureCache.has(cacheKey)) return preferenceFigureTextureCache.get(cacheKey);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+
+  if (colors.length === 1) {
+    ctx.fillStyle = colors[0];
+    ctx.fillRect(0, 0, 256, 256);
+  } else {
+    ctx.fillStyle = colors[0];
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(256, 0);
+    ctx.lineTo(0, 256);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = colors[1];
+    ctx.beginPath();
+    ctx.moveTo(256, 0);
+    ctx.lineTo(256, 256);
+    ctx.lineTo(0, 256);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.anisotropy = Math.min(8, maxTextureAnisotropy);
+  preferenceFigureTextureCache.set(cacheKey, texture);
+  return texture;
 }
 
 // Create keys
-faces.forEach(({ axis, sign, prefix, color }) => {
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 4; j++) {
+faces.forEach((face) => {
+  const { axis, sign, prefix, color } = face;
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 4; col++) {
       const key = new THREE.Mesh(keyGeometry, new THREE.MeshStandardMaterial({ color }));
-      const keyIndex = i * 4 + j + 1;
+      const keyIndex = row * 4 + col + 1;
       const keyID = `${prefix}${keyIndex}`;
-      const u = (i - 1.5) * spacing;
-      const v = (j - 1.5) * spacing;
       
-      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis, sign, gridI: i, gridJ: j };
+      key.userData = { id: keyID, face: prefix, index: keyIndex, originalColor: color, axis, sign, gridRow: row, gridCol: col };
       key.name = keyID;
       
-      const pos = getLabelPosition(axis, sign, u, v, 0);
+      const pos = getLabelPosition(face, row, col, 0);
       key.position.set(pos.x, pos.y, pos.z);
       key.userData.originalPosition = key.position.clone();
       keycubeGroup.add(key);
@@ -191,7 +304,7 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       // Add text label
       const label = createTextLabel(keyID, axis, sign);
       label.userData.parentKeyId = keyID;
-      const labelPos = getLabelPosition(axis, sign, u, v, 0.078);
+      const labelPos = getLabelPosition(face, row, col, 0.078);
       label.position.set(labelPos.x, labelPos.y, labelPos.z);
       label.userData.originalPosition = label.position.clone();
       keycubeGroup.add(label);
@@ -199,7 +312,7 @@ faces.forEach(({ axis, sign, prefix, color }) => {
       // Add score label (hidden by default)
       const scoreLabel = createScoreLabel(axis, sign);
       scoreLabel.userData.parentKeyId = keyID;
-      const scorePos = getLabelPosition(axis, sign, u, v, 0.079);
+      const scorePos = getLabelPosition(face, row, col, 0.079);
       scoreLabel.position.set(scorePos.x, scorePos.y, scorePos.z);
       scoreLabel.userData.originalPosition = scoreLabel.position.clone();
       keycubeGroup.add(scoreLabel);
@@ -214,7 +327,7 @@ const DIAGONAL_ROTATION = -Math.PI * 3 / 4;
 
 // ─── Auto-rotation control ───
 ['pointerdown', 'wheel', 'touchstart'].forEach(evt => 
-  renderer.domElement.addEventListener(evt, () => controls.autoRotate = false)
+  renderer.domElement.addEventListener(evt, pauseAutoRotate)
 );
 
 // ─── Orbit pivot ───
@@ -235,6 +348,7 @@ function handleResize() {
   const c = document.getElementById('model-container');
   const w = c ? c.offsetWidth : window.innerWidth;
   const h = c ? c.offsetHeight : window.innerHeight;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
@@ -249,12 +363,15 @@ window.updateModel = function(data) {
   if (data.handedness) {
     keycubeGroup.scale.x = data.handedness === 'left' ? -1 : 1;
   }
-  
+
   if (data.reset) {
     // Reset all colors and positions to original
     keycubeGroup.children.forEach(child => {
       if (child.userData?.originalColor) {
         child.material.color.set(child.userData.originalColor);
+        child.material.emissive?.set(0x000000);
+        child.material.map = null;
+        child.material.needsUpdate = true;
         child.scale.set(1, 1, 1);
         if (child.userData.originalPosition) {
           child.position.copy(child.userData.originalPosition);
@@ -285,6 +402,7 @@ window.updateModel = function(data) {
   }
 
   if (data.isReachability !== undefined) isReachabilityMode = data.isReachability;
+  if (data.scoreFormat !== undefined) currentScoreFormat = data.scoreFormat;
 
   // Update score values
   if (data.scores) {
@@ -313,6 +431,9 @@ window.updateModel = function(data) {
   if (data.resetView) {
     camera.position.copy(initialCameraPosition);
     controls.target.copy(initialControlsTarget);
+    autoRotateLocked = false;
+    controls.autoRotate = true;
+    if (autoRotateResumeTimer) clearTimeout(autoRotateResumeTimer);
     camera.zoom = 1;
     camera.updateProjectionMatrix();
     controls.update();
@@ -322,6 +443,46 @@ window.updateModel = function(data) {
 
   // Heatmap color: invert=true → low=green (preference), invert=false → high=green (reachability)
   const heatmapColor = (norm, invert) => new THREE.Color().setHSL((invert ? 1 - norm : norm) * 0.33, 0.9, 0.5);
+
+  const applyPreferenceFigure = (figureData, singleFace) => {
+    keycubeGroup.children.forEach(child => {
+      if (!child.userData?.face || !child.userData?.index) return;
+
+      const face = child.userData.face;
+      const faceData = figureData.scores[face];
+      if (!faceData) {
+        child.material.color.set(child.userData.originalColor);
+        child.material.emissive?.set(0x000000);
+        child.material.map = null;
+        child.material.needsUpdate = true;
+        return;
+      }
+
+      const shouldDim = singleFace && face !== singleFace;
+      if (shouldDim) {
+        child.material.color.copy(toLinearColor('#eceff1'));
+        child.material.emissive?.set(toLinearColor('#dfe5e8'));
+        child.material.map = null;
+        child.material.needsUpdate = true;
+        return;
+      }
+
+      const score = figureData.scores[face][child.userData.index - 1];
+      const tiedFingers = figureData.tiedFingers[face][child.userData.index - 1];
+      const textureColors = tiedFingers.map(function (fingerCode) {
+        return `#${getPreferenceFigureColor(fingerCode, score).convertLinearToSRGB().getHexString()}`;
+      });
+      const averageColor = tiedFingers
+        .map(fingerCode => getPreferenceFigureColor(fingerCode, score))
+        .reduce((acc, color, index, arr) => acc.add(color.clone().multiplyScalar(1 / arr.length)), new THREE.Color(0, 0, 0));
+
+      const splitTexture = textureColors.length > 1 ? createPreferenceFigureTexture(child.userData.id, textureColors) : null;
+      child.material.map = splitTexture;
+      child.material.color.copy(splitTexture ? toLinearColor('#ffffff') : averageColor);
+      child.material.emissive?.copy(averageColor.clone().multiplyScalar(splitTexture ? 0.18 : 0.42));
+      child.material.needsUpdate = true;
+    });
+  };
 
   // Apply heatmap to keys
   const applyHeatmap = (heatmapData, min, max, invert, dimOthers) => {
@@ -345,6 +506,17 @@ window.updateModel = function(data) {
   }
   if (data.heatmapSingleFace) {
     applyHeatmap(data.heatmapSingleFace, data.heatmapMin ?? 0, data.heatmapMax ?? 1, !!data.heatmapInvert, true);
+  }
+  if (data.preferenceFigure) {
+    applyPreferenceFigure(data.preferenceFigure, data.preferenceFigureSingleFace || null);
+  }
+
+  if (data.figure6View) {
+    autoRotateLocked = false;
+    controls.autoRotate = true;
+  } else if (data.figure6View === false) {
+    autoRotateLocked = false;
+    controls.autoRotate = true;
   }
 };
 </script>
